@@ -1,0 +1,281 @@
+<!DOCTYPE html><html class="h-full" lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gameplay | TintTube</title>
+<link rel="stylesheet" href="assets/tailwind.css">
+<link rel="stylesheet" href="assets/ui.css">
+<script src="assets/ui.js" defer></script>
+
+</head>
+<body data-screen="gameplay" class="bg-gradient-to-b from-[#F6F7FF] via-[#F2F3FB] to-[#EBE9FE] min-h-screen text-on-surface flex flex-col relative select-none">
+<main class="flex-1 flex flex-col relative w-full pt-safe pb-safe"><div class="flex flex-col w-full relative select-none px-gutter pb-6">
+<!-- Ambient Floating Background Blobs & Playful Bubbles -->
+<div class="absolute inset-0 pointer-events-none overflow-hidden -z-10">
+<div class="absolute -top-12 -left-12 w-64 h-64 bg-primary-fixed/35 rounded-full blur-3xl"></div>
+<div class="absolute top-1/3 -right-20 w-72 h-72 bg-secondary-fixed/30 rounded-full blur-3xl"></div>
+<div class="absolute bottom-16 left-1/4 w-80 h-80 bg-primary-fixed-dim/25 rounded-full blur-3xl"></div>
+<!-- Soft Decorative Bubbles -->
+<div class="absolute top-28 left-8 w-6 h-6 rounded-full bg-white/60 shadow-sm backdrop-blur-sm"></div>
+<div class="absolute top-44 right-10 w-9 h-9 rounded-full bg-white/40 shadow-sm backdrop-blur-sm"></div>
+<div class="absolute top-2/3 left-6 w-5 h-5 rounded-full bg-white/50 shadow-sm"></div>
+<div class="absolute top-1/2 right-7 w-4 h-4 rounded-full bg-white/70 shadow-sm"></div>
+</div>
+<!-- Top Bar: Navigation, Level Info, and Coin Bank -->
+<header class="w-full flex items-center justify-between h-16 relative z-20">
+<!-- Back / Pause Circular Tactile Button -->
+<button aria-label="Pause Game" class="w-11 h-11 rounded-full bg-surface-container-lowest shadow-md flex items-center justify-center text-on-surface active:translate-y-1 transition-transform relative group" type="button" data-open-preview aria-haspopup="dialog">
+<div class="absolute inset-x-0 bottom-0 h-1 bg-surface-container rounded-b-full"></div>
+<span class="material-symbols-outlined text-[24px] text-on-surface-variant group-active:scale-95 transition-transform" aria-hidden="true">pause</span>
+</button>
+<!-- Center: Level Info & Badge -->
+<div class="flex flex-col items-center">
+<div class="flex items-center gap-1.5">
+<h1 class="font-headline-md text-headline-md text-on-surface tracking-tight" id="level-title">Level 12</h1>
+<span class="bg-secondary-container text-on-secondary-container font-label-sm text-label-sm px-2 py-0.5 rounded-full uppercase tracking-wider shadow-sm">Easy</span>
+</div>
+</div>
+<!-- Right: Tactile Coin Pill -->
+<div class="flex items-center bg-surface-container-lowest px-2 py-1 rounded-full shadow-md gap-1.5 pl-2.5">
+<div class="w-6 h-6 rounded-full bg-tertiary-fixed-dim flex items-center justify-center text-tertiary shadow-inner">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">monetization_on</span>
+</div>
+<span class="font-counter-numeral text-counter-numeral text-on-surface">1,250</span>
+<a aria-label="Add Coins" class="w-6 h-6 rounded-full bg-primary-container text-on-primary flex items-center justify-center shadow-sm active:scale-90 transition-transform" href="shop.html">
+<span class="material-symbols-outlined text-[16px] font-bold" aria-hidden="true">add</span>
+</a>
+</div>
+</header>
+<!-- Sub-Header: Tactile Moves Counter -->
+<div class="w-full flex justify-center mt-1 mb-4 z-10">
+<div class="inline-flex items-center gap-2 bg-surface-container-lowest/90 backdrop-blur-md px-4 py-1.5 rounded-full shadow-sm">
+<span class="material-symbols-outlined text-[18px] text-primary" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">sync_alt</span>
+<div class="flex items-center gap-1">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Moves:</span>
+<span class="font-headline-sm text-headline-sm text-primary" id="moveCount">8</span>
+</div>
+</div>
+</div>
+<!-- Main Game Board: 7 Ergonomic Glass Vials (Row 1: 4 tubes, Row 2: 3 tubes) -->
+<section aria-label="Puzzle board" class="w-full flex flex-col items-center justify-center gap-7 my-auto py-2 relative z-10">
+<!-- Row 1: 4 Glass Tubes -->
+<div class="flex justify-center items-end gap-2 min-[380px]:gap-3.5 w-full max-w-sm px-1">
+<!-- Tube 1: Mixed Stack (Purple, Blue, Yellow, Red) -->
+<button class="tube-btn relative w-14 h-52 rounded-b-full bg-surface-container-lowest/30 backdrop-blur-md shadow-lg flex flex-col justify-end overflow-hidden p-1 group transition-all duration-300" data-tube="1" type="button" aria-label="Tube 1" aria-pressed="false">
+<!-- Glass Rim Top -->
+<div class="absolute top-0 inset-x-0 h-2 bg-white/70 rounded-full shadow-sm z-20"></div>
+<!-- Glossy Specular Light Reflection Streak -->
+<div class="absolute top-2 left-1.5 w-1.5 bottom-3 bg-white/40 rounded-full pointer-events-none z-20"></div>
+<!-- Liquid Column (Capacity: 4 Slots) -->
+<div class="w-full h-full flex flex-col justify-end rounded-b-[1.25rem] overflow-hidden">
+<!-- Segment 4 (Top): Red (Circle Glyph) -->
+<div class="h-1/4 w-full bg-error flex items-center justify-center relative shadow-inner">
+<span class="material-symbols-outlined text-white/50 text-[18px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">circle</span>
+<div class="absolute top-0 inset-x-0 h-1 bg-white/30 rounded-full"></div>
+</div>
+<!-- Segment 3: Yellow (Diamond Glyph) -->
+<div class="h-1/4 w-full bg-[#E5A000] flex items-center justify-center relative shadow-inner">
+<span class="material-symbols-outlined text-white/50 text-[18px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">square</span>
+<div class="absolute top-0 inset-x-0 h-1 bg-white/25 rounded-full"></div>
+</div>
+<!-- Segment 2: Blue (Water Drop Glyph) -->
+<div class="h-1/4 w-full bg-[#1A73E8] flex items-center justify-center relative shadow-inner">
+<span class="material-symbols-outlined text-white/50 text-[18px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">water_drop</span>
+<div class="absolute top-0 inset-x-0 h-1 bg-white/25 rounded-full"></div>
+</div>
+<!-- Segment 1 (Bottom): Purple (Star Glyph) -->
+<div class="h-1/4 w-full bg-primary flex items-center justify-center relative shadow-inner rounded-b-[1.25rem]">
+<span class="material-symbols-outlined text-white/50 text-[18px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+</div>
+</div>
+</button>
+<!-- Tube 2: ACTIVE SELECTED TUBE (Lifted, Glowing Iris Halo, Sparkle Indicator) -->
+<button class="tube-btn relative w-14 h-52 rounded-b-full bg-surface-container-lowest/40 backdrop-blur-md shadow-lg flex flex-col justify-end overflow-hidden p-1 transition-all duration-300 group" data-tube="2" type="button" aria-label="Tube 2" aria-pressed="true">
+<!-- Glass Rim Top -->
+<div class="absolute top-0 inset-x-0 h-2 bg-white/90 rounded-full shadow-sm z-20"></div>
+<!-- Glossy Specular Light Reflection Streak -->
+<div class="absolute top-2 left-1.5 w-1.5 bottom-3 bg-white/50 rounded-full pointer-events-none z-20"></div>
+<!-- Liquid Column (Green, Green, Blue, Blue) -->
+<div class="w-full h-full flex flex-col justify-end rounded-b-[1.25rem] overflow-hidden">
+<!-- Segment 4 (Top): Blue (Water Drop Glyph) -->
+<div class="h-1/4 w-full bg-[#1A73E8] flex items-center justify-center relative shadow-inner">
+<span class="material-symbols-outlined text-white/50 text-[18px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">water_drop</span>
+<div class="absolute top-0 inset-x-0 h-1.5 bg-white/40 rounded-full"></div>
+</div>
+<!-- Segment 3: Blue (Water Drop Glyph) -->
+<div class="h-1/4 w-full bg-[#1A73E8] flex items-center justify-center relative shadow-inner">
+<span class="material-symbols-outlined text-white/50 text-[18px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">water_drop</span>
+<div class="absolute top-0 inset-x-0 h-1 bg-white/20 rounded-full"></div>
+</div>
+<!-- Segment 2: Green (Triangle Glyph) -->
+<div class="h-1/4 w-full bg-[#00875A] flex items-center justify-center relative shadow-inner">
+<span class="material-symbols-outlined text-white/50 text-[18px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">change_history</span>
+<div class="absolute top-0 inset-x-0 h-1 bg-white/20 rounded-full"></div>
+</div>
+<!-- Segment 1 (Bottom): Green (Triangle Glyph) -->
+<div class="h-1/4 w-full bg-[#00875A] flex items-center justify-center relative shadow-inner rounded-b-[1.25rem]">
+<span class="material-symbols-outlined text-white/50 text-[18px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">change_history</span>
+</div>
+</div>
+</button>
+<!-- Tube 3: Mixed (Orange, Orange, Red, Purple) -->
+<button class="tube-btn relative w-14 h-52 rounded-b-full bg-surface-container-lowest/30 backdrop-blur-md shadow-lg flex flex-col justify-end overflow-hidden p-1 group transition-all duration-300" data-tube="3" type="button" aria-label="Tube 3" aria-pressed="false">
+<div class="absolute top-0 inset-x-0 h-2 bg-white/70 rounded-full shadow-sm z-20"></div>
+<div class="absolute top-2 left-1.5 w-1.5 bottom-3 bg-white/40 rounded-full pointer-events-none z-20"></div>
+<div class="w-full h-full flex flex-col justify-end rounded-b-[1.25rem] overflow-hidden">
+<!-- Segment 4: Purple (Star) -->
+<div class="h-1/4 w-full bg-primary flex items-center justify-center relative shadow-inner">
+<span class="material-symbols-outlined text-white/50 text-[18px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+<div class="absolute top-0 inset-x-0 h-1 bg-white/30 rounded-full"></div>
+</div>
+<!-- Segment 3: Red (Circle) -->
+<div class="h-1/4 w-full bg-error flex items-center justify-center relative shadow-inner">
+<span class="material-symbols-outlined text-white/50 text-[18px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">circle</span>
+<div class="absolute top-0 inset-x-0 h-1 bg-white/25 rounded-full"></div>
+</div>
+<!-- Segment 2: Orange (Sun) -->
+<div class="h-1/4 w-full bg-[#E65100] flex items-center justify-center relative shadow-inner">
+<span class="material-symbols-outlined text-white/50 text-[18px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">light_mode</span>
+<div class="absolute top-0 inset-x-0 h-1 bg-white/25 rounded-full"></div>
+</div>
+<!-- Segment 1: Orange (Sun) -->
+<div class="h-1/4 w-full bg-[#E65100] flex items-center justify-center relative shadow-inner rounded-b-[1.25rem]">
+<span class="material-symbols-outlined text-white/50 text-[18px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">light_mode</span>
+</div>
+</div>
+</button>
+<!-- Tube 4: Mixed (Yellow, Yellow, Green, Purple) -->
+<button class="tube-btn relative w-14 h-52 rounded-b-full bg-surface-container-lowest/30 backdrop-blur-md shadow-lg flex flex-col justify-end overflow-hidden p-1 group transition-all duration-300" data-tube="4" type="button" aria-label="Tube 4" aria-pressed="false">
+<div class="absolute top-0 inset-x-0 h-2 bg-white/70 rounded-full shadow-sm z-20"></div>
+<div class="absolute top-2 left-1.5 w-1.5 bottom-3 bg-white/40 rounded-full pointer-events-none z-20"></div>
+<div class="w-full h-full flex flex-col justify-end rounded-b-[1.25rem] overflow-hidden">
+<!-- Segment 4: Purple (Star) -->
+<div class="h-1/4 w-full bg-primary flex items-center justify-center relative shadow-inner">
+<span class="material-symbols-outlined text-white/50 text-[18px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+<div class="absolute top-0 inset-x-0 h-1 bg-white/30 rounded-full"></div>
+</div>
+<!-- Segment 3: Green (Triangle) -->
+<div class="h-1/4 w-full bg-[#00875A] flex items-center justify-center relative shadow-inner">
+<span class="material-symbols-outlined text-white/50 text-[18px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">change_history</span>
+<div class="absolute top-0 inset-x-0 h-1 bg-white/25 rounded-full"></div>
+</div>
+<!-- Segment 2: Yellow (Diamond) -->
+<div class="h-1/4 w-full bg-[#E5A000] flex items-center justify-center relative shadow-inner">
+<span class="material-symbols-outlined text-white/50 text-[18px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">square</span>
+<div class="absolute top-0 inset-x-0 h-1 bg-white/25 rounded-full"></div>
+</div>
+<!-- Segment 1: Yellow (Diamond) -->
+<div class="h-1/4 w-full bg-[#E5A000] flex items-center justify-center relative shadow-inner rounded-b-[1.25rem]">
+<span class="material-symbols-outlined text-white/50 text-[18px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">square</span>
+</div>
+</div>
+</button>
+</div>
+<!-- Row 2: 3 Glass Tubes (Centered Below) -->
+<div class="flex justify-center items-end gap-5 w-full max-w-sm px-4">
+<!-- Tube 5: Partial (Red, Red, Orange) -->
+<button class="tube-btn relative w-14 h-52 rounded-b-full bg-surface-container-lowest/30 backdrop-blur-md shadow-lg flex flex-col justify-end overflow-hidden p-1 group transition-all duration-300" data-tube="5" type="button" aria-label="Tube 5" aria-pressed="false">
+<div class="absolute top-0 inset-x-0 h-2 bg-white/70 rounded-full shadow-sm z-20"></div>
+<div class="absolute top-2 left-1.5 w-1.5 bottom-3 bg-white/40 rounded-full pointer-events-none z-20"></div>
+<!-- Liquid Column (Only 3 segments filled, top slot empty) -->
+<div class="w-full h-full flex flex-col justify-end rounded-b-[1.25rem] overflow-hidden">
+<div class="h-1/4 w-full"></div> <!-- Empty Slot 4 -->
+<!-- Segment 3: Orange (Sun) -->
+<div class="h-1/4 w-full bg-[#E65100] flex items-center justify-center relative shadow-inner">
+<span class="material-symbols-outlined text-white/50 text-[18px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">light_mode</span>
+<div class="absolute top-0 inset-x-0 h-1.5 bg-white/35 rounded-full"></div>
+</div>
+<!-- Segment 2: Red (Circle) -->
+<div class="h-1/4 w-full bg-error flex items-center justify-center relative shadow-inner">
+<span class="material-symbols-outlined text-white/50 text-[18px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">circle</span>
+<div class="absolute top-0 inset-x-0 h-1 bg-white/20 rounded-full"></div>
+</div>
+<!-- Segment 1: Red (Circle) -->
+<div class="h-1/4 w-full bg-error flex items-center justify-center relative shadow-inner rounded-b-[1.25rem]">
+<span class="material-symbols-outlined text-white/50 text-[18px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">circle</span>
+</div>
+</div>
+</button>
+<!-- Tube 6: Ready Target (1 Segment Blue) -->
+<button class="tube-btn relative w-14 h-52 rounded-b-full bg-surface-container-lowest/30 backdrop-blur-md shadow-lg flex flex-col justify-end overflow-hidden p-1 group transition-all duration-300 hover:ring-2 hover:ring-secondary" data-tube="6" type="button" aria-label="Tube 6" aria-pressed="false">
+<div class="absolute top-0 inset-x-0 h-2 bg-white/70 rounded-full shadow-sm z-20"></div>
+<div class="absolute top-2 left-1.5 w-1.5 bottom-3 bg-white/40 rounded-full pointer-events-none z-20"></div>
+<!-- Liquid Column (1 segment filled, 3 slots empty ready to receive poured blue) -->
+<div class="w-full h-full flex flex-col justify-end rounded-b-[1.25rem] overflow-hidden">
+<div class="h-3/4 w-full"></div>
+<!-- Segment 1: Blue (Water Drop) -->
+<div class="h-1/4 w-full bg-[#1A73E8] flex items-center justify-center relative shadow-inner rounded-b-[1.25rem]">
+<span class="material-symbols-outlined text-white/50 text-[18px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">water_drop</span>
+<div class="absolute top-0 inset-x-0 h-1.5 bg-white/35 rounded-full"></div>
+</div>
+</div>
+</button>
+<!-- Tube 7: Completely Empty Glass Vial -->
+<button class="tube-btn relative w-14 h-52 rounded-b-full bg-surface-container-lowest/25 backdrop-blur-md shadow-md flex flex-col justify-end overflow-hidden p-1 group transition-all duration-300 hover:ring-2 hover:ring-secondary/60" data-tube="7" type="button" aria-label="Tube 7" aria-pressed="false">
+<div class="absolute top-0 inset-x-0 h-2 bg-white/80 rounded-full shadow-sm z-20"></div>
+<div class="absolute top-2 left-1.5 w-1.5 bottom-3 bg-white/35 rounded-full pointer-events-none z-20"></div>
+<!-- Gentle Frosted Base Indicator -->
+<div class="w-full h-4 bg-white/20 rounded-b-[1.25rem] mb-0.5"></div>
+</button>
+</div>
+</section>
+<!-- Bottom Power-Up Dock (Ergonomic thumb-accessible boosters) -->
+<footer class="w-full flex items-center justify-between px-2 pt-3 z-20">
+<!-- 1. Undo Button -->
+<div class="flex flex-col items-center gap-1.5">
+<button aria-label="Undo Move" class="w-14 h-14 rounded-2xl bg-surface-container-lowest shadow-md flex items-center justify-center relative active:translate-y-1 transition-transform group" disabled>
+<div class="absolute inset-x-0 bottom-0 h-1 bg-surface-container rounded-b-2xl"></div>
+<!-- Pill Count Badge -->
+<span class="absolute -top-1.5 -right-1.5 bg-error text-white font-label-sm text-label-sm w-5 h-5 rounded-full flex items-center justify-center shadow font-bold">3</span>
+<span class="material-symbols-outlined text-[26px] text-primary group-active:rotate-[-20deg] transition-transform" aria-hidden="true">undo</span>
+</button>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-bold uppercase tracking-wider">Undo</span>
+</div>
+<!-- 2. Restart Button -->
+<div class="flex flex-col items-center gap-1.5">
+<button aria-label="Restart Level" class="w-14 h-14 rounded-2xl bg-surface-container-lowest shadow-md flex items-center justify-center relative active:translate-y-1 transition-transform group" disabled>
+<div class="absolute inset-x-0 bottom-0 h-1 bg-surface-container rounded-b-2xl"></div>
+<span class="material-symbols-outlined text-[26px] text-on-surface-variant group-active:rotate-180 transition-transform duration-500" aria-hidden="true">replay</span>
+</button>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-bold uppercase tracking-wider">Restart</span>
+</div>
+<!-- 3. Hint Button with Coin Badge -->
+<div class="flex flex-col items-center gap-1.5">
+<button aria-label="Use Hint" class="w-14 h-14 rounded-2xl bg-surface-container-lowest shadow-md flex items-center justify-center relative active:translate-y-1 transition-transform group" disabled>
+<div class="absolute inset-x-0 bottom-0 h-1 bg-surface-container rounded-b-2xl"></div>
+<!-- Badge with cost 50 coins -->
+<div class="absolute -top-2 inset-x-auto bg-tertiary-fixed-dim text-tertiary px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-sm">
+<span class="material-symbols-outlined text-[10px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">monetization_on</span>
+<span class="font-label-sm text-[10px] leading-none font-black">50</span>
+</div>
+<span class="material-symbols-outlined text-[26px] text-tertiary group-active:scale-110 transition-transform" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">lightbulb</span>
+</button>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-bold uppercase tracking-wider">Hint</span>
+</div>
+<!-- 4. Pause / Extra Utility Button -->
+<div class="flex flex-col items-center gap-1.5">
+<button aria-label="Preview menu" class="w-14 h-14 rounded-2xl bg-surface-container-lowest shadow-md flex items-center justify-center relative active:translate-y-1 transition-transform group" type="button" data-open-preview aria-haspopup="dialog">
+<div class="absolute inset-x-0 bottom-0 h-1 bg-surface-container rounded-b-2xl"></div>
+<span class="material-symbols-outlined text-[26px] text-secondary group-active:scale-95 transition-transform" aria-hidden="true">menu</span>
+</button>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-bold uppercase tracking-wider">Pause</span>
+</div>
+</footer>
+<!-- Light client-side interaction script for tube selection tactile feedback -->
+</div>
+</main>
+
+<dialog class="preview-menu" id="preview-menu" aria-labelledby="preview-title">
+  <div class="flex items-center justify-between gap-3">
+    <h2 class="text-headline-md" id="preview-title">Gameplay preview</h2>
+    <form method="dialog"><button class="rounded-full p-2" aria-label="Close preview menu"><span class="material-symbols-outlined" aria-hidden="true">close</span></button></form>
+  </div>
+  <div class="grid gap-2 mt-3">
+    <a href="pouring.html">Pour animation</a>
+    <a href="glossy-pouring.html">Glossy pour animation</a>
+    <a href="level-complete.html">Level complete</a>
+    <a href="levels.html">Levels</a>
+    <a href="index.html">Home</a>
+  </div>
+</dialog>
+</body>
+</html>

@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html class="h-full" lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Levels | TintTube</title>
+<link rel="stylesheet" href="assets/tailwind.css">
+<link rel="stylesheet" href="assets/ui.css">
+<script src="assets/ui.js" defer></script>
+
+  </head>
+<body data-screen="levels" class="bg-gradient-to-b from-[#F6F7FF] via-[#F2F3FB] to-[#EBE9FE] min-h-screen text-on-surface flex flex-col relative select-none">
+<main class="flex-1 flex flex-col relative w-full pt-safe pb-safe"><div class="flex flex-col w-full relative select-none">
+<!-- Subtle Ambient Background Bubbles (Light, Joyful, Fluid) -->
+<div class="absolute inset-0 pointer-events-none overflow-hidden -z-10">
+<div class="absolute -top-6 -left-10 w-44 h-44 rounded-full bg-primary-fixed-dim/25 blur-2xl"></div>
+<div class="absolute top-80 -right-12 w-52 h-52 rounded-full bg-secondary-fixed/30 blur-3xl"></div>
+<div class="absolute bottom-28 left-6 w-36 h-36 rounded-full bg-tertiary-fixed/30 blur-2xl"></div>
+</div>
+<!-- Header Bar -->
+<header class="flex items-center justify-between px-space-md py-space-sm w-full">
+<!-- Back Button with 3D tactile push feel -->
+<a aria-label="Go Back" class="w-11 h-11 rounded-full bg-surface-container-lowest text-on-surface shadow-md flex items-center justify-center transition-transform active:scale-95 active:translate-y-0.5" href="index.html">
+<span class="material-symbols-outlined text-[24px]" aria-hidden="true">arrow_back</span>
+</a>
+<!-- Screen Title -->
+<div class="flex flex-col items-center">
+<h1 class="font-headline-md text-headline-md text-on-surface">Select Level</h1>
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">World 1 • Prism Lab</span>
+</div>
+<!-- Coin Balance Pill -->
+<div class="h-10 pl-2 pr-1.5 bg-surface-container-lowest rounded-full shadow-md flex items-center gap-1.5">
+<div class="w-6 h-6 rounded-full bg-tertiary-container text-on-tertiary-container flex items-center justify-center shadow-inner">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">monetization_on</span>
+</div>
+<span class="font-counter-numeral text-counter-numeral text-on-surface tracking-tight pr-0.5">1,250</span>
+<a aria-label="Add Coins" class="w-7 h-7 rounded-full bg-primary-container text-on-primary flex items-center justify-center shadow-sm active:scale-90 transition-transform" href="shop.html">
+<span class="material-symbols-outlined text-[18px]" aria-hidden="true">add</span>
+</a>
+</div>
+</header>
+<!-- Sticky-styled Progress / Summary Card -->
+<div class="px-space-md pt-space-xs pb-space-sm w-full">
+<div class="bg-surface-container-lowest rounded p-space-md shadow-md flex flex-col gap-2.5">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">science</span>
+</div>
+<div>
+<div class="font-headline-sm text-headline-sm text-on-surface leading-tight">Chapter 1</div>
+<div class="font-label-sm text-label-sm text-outline">12 of 80 Levels Cleared</div>
+</div>
+</div>
+<!-- Star Total Counter Pill -->
+<div class="flex items-center gap-1 px-3 py-1.5 rounded-full bg-surface-container-low shadow-inner">
+<span class="material-symbols-outlined text-[18px] text-tertiary-container" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+<span class="font-counter-numeral text-counter-numeral text-on-surface">32</span>
+<span class="font-label-sm text-label-sm text-outline">/240</span>
+</div>
+</div>
+<!-- Segmented Tactile Progress Bar -->
+<div class="w-full h-3 rounded-full bg-surface-container-high overflow-hidden p-0.5">
+<div class="h-full rounded-full bg-gradient-to-r from-secondary to-primary-container transition-all duration-500" style="width: 15%;"></div>
+</div>
+</div>
+</div>
+<!-- Level Grid Canvas (Scrollable Flow) -->
+<div class="flex flex-col gap-space-lg px-space-md pb-16 w-full">
+<!-- SECTION 1: TUTORIAL -->
+<section class="flex flex-col gap-space-sm">
+<!-- Section Header -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Tutorial</h2>
+<span class="px-2.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm">
+            Lv. 1–10
+          </span>
+</div>
+<div class="flex items-center gap-1 text-secondary font-label-md text-label-md">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">check_circle</span>
+<span>10/10 Completed</span>
+</div>
+</div>
+<!-- 4-Column Grid (Levels 1 to 10) -->
+<div class="grid grid-cols-4 gap-3 w-full">
+<!-- Level 1 (3 Stars) -->
+<a class="aspect-square bg-surface-container-lowest rounded shadow-md flex flex-col items-center justify-between py-2 transition-transform active:scale-95 active:translate-y-0.5" href="gameplay.html?level=1" aria-label="Level 1">
+<span class="font-headline-md text-headline-md text-on-surface">1</span>
+<div class="flex items-center gap-0.5 text-tertiary-container">
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+</div>
+</a>
+<!-- Level 2 (3 Stars) -->
+<a class="aspect-square bg-surface-container-lowest rounded shadow-md flex flex-col items-center justify-between py-2 transition-transform active:scale-95 active:translate-y-0.5" href="gameplay.html?level=2" aria-label="Level 2">
+<span class="font-headline-md text-headline-md text-on-surface">2</span>
+<div class="flex items-center gap-0.5 text-tertiary-container">
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+</div>
+</a>
+<!-- Level 3 (3 Stars) -->
+<a class="aspect-square bg-surface-container-lowest rounded shadow-md flex flex-col items-center justify-between py-2 transition-transform active:scale-95 active:translate-y-0.5" href="gameplay.html?level=3" aria-label="Level 3">
+<span class="font-headline-md text-headline-md text-on-surface">3</span>
+<div class="flex items-center gap-0.5 text-tertiary-container">
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+</div>
+</a>
+<!-- Level 4 (3 Stars) -->
+<a class="aspect-square bg-surface-container-lowest rounded shadow-md flex flex-col items-center justify-between py-2 transition-transform active:scale-95 active:translate-y-0.5" href="gameplay.html?level=4" aria-label="Level 4">
+<span class="font-headline-md text-headline-md text-on-surface">4</span>
+<div class="flex items-center gap-0.5 text-tertiary-container">
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+</div>
+</a>
+<!-- Level 5 (3 Stars) -->
+<a class="aspect-square bg-surface-container-lowest rounded shadow-md flex flex-col items-center justify-between py-2 transition-transform active:scale-95 active:translate-y-0.5" href="gameplay.html?level=5" aria-label="Level 5">
+<span class="font-headline-md text-headline-md text-on-surface">5</span>
+<div class="flex items-center gap-0.5 text-tertiary-container">
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+</div>
+</a>
+<!-- Level 6 (3 Stars) -->
+<a class="aspect-square bg-surface-container-lowest rounded shadow-md flex flex-col items-center justify-between py-2 transition-transform active:scale-95 active:translate-y-0.5" href="gameplay.html?level=6" aria-label="Level 6">
+<span class="font-headline-md text-headline-md text-on-surface">6</span>
+<div class="flex items-center gap-0.5 text-tertiary-container">
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+</div>
+</a>
+<!-- Level 7 (3 Stars) -->
+<a class="aspect-square bg-surface-container-lowest rounded shadow-md flex flex-col items-center justify-between py-2 transition-transform active:scale-95 active:translate-y-0.5" href="gameplay.html?level=7" aria-label="Level 7">
+<span class="font-headline-md text-headline-md text-on-surface">7</span>
+<div class="flex items-center gap-0.5 text-tertiary-container">
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+</div>
+</a>
+<!-- Level 8 (3 Stars) -->
+<a class="aspect-square bg-surface-container-lowest rounded shadow-md flex flex-col items-center justify-between py-2 transition-transform active:scale-95 active:translate-y-0.5" href="gameplay.html?level=8" aria-label="Level 8">
+<span class="font-headline-md text-headline-md text-on-surface">8</span>
+<div class="flex items-center gap-0.5 text-tertiary-container">
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+</div>
+</a>
+<!-- Level 9 (3 Stars) -->
+<a class="aspect-square bg-surface-container-lowest rounded shadow-md flex flex-col items-center justify-between py-2 transition-transform active:scale-95 active:translate-y-0.5" href="gameplay.html?level=9" aria-label="Level 9">
+<span class="font-headline-md text-headline-md text-on-surface">9</span>
+<div class="flex items-center gap-0.5 text-tertiary-container">
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+</div>
+</a>
+<!-- Level 10 (3 Stars) -->
+<a class="aspect-square bg-surface-container-lowest rounded shadow-md flex flex-col items-center justify-between py-2 transition-transform active:scale-95 active:translate-y-0.5" href="gameplay.html?level=10" aria-label="Level 10">
+<span class="font-headline-md text-headline-md text-on-surface">10</span>
+<div class="flex items-center gap-0.5 text-tertiary-container">
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+</div>
+</a>
+</div>
+</section>
+<!-- SECTION 2: EASY (ACTIVE PLAY ZONE) -->
+<section class="flex flex-col gap-space-sm">
+<!-- Section Header -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Easy</h2>
+<span class="px-2.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm">
+            EASY • 11–30
+          </span>
+</div>
+<div class="flex items-center gap-1 text-outline font-label-md text-label-md">
+<span>1 / 20 Cleared</span>
+</div>
+</div>
+<!-- 4-Column Grid -->
+<div class="grid grid-cols-4 gap-3 w-full">
+<!-- Level 11 (Completed, 2 Stars) -->
+<a class="aspect-square bg-surface-container-lowest rounded shadow-md flex flex-col items-center justify-between py-2 transition-transform active:scale-95 active:translate-y-0.5" href="gameplay.html?level=11" aria-label="Level 11">
+<span class="font-headline-md text-headline-md text-on-surface">11</span>
+<div class="flex items-center gap-0.5 text-tertiary-container">
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+<span class="material-symbols-outlined text-[13px] text-surface-container-highest" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+</div>
+</a>
+<!-- Level 12: CURRENT ACTIVE HERO TILE -->
+<div class="relative aspect-square">
+<!-- Bouncing / Pulsing Ambient Ring -->
+<div class="absolute -inset-1 rounded-lg bg-primary-container opacity-40 blur-md animate-pulse"></div>
+<!-- Active Hero Button -->
+<a class="relative w-full h-full bg-primary-container text-on-primary rounded shadow-xl flex flex-col items-center justify-between pt-2 pb-1.5 overflow-hidden transition-transform active:scale-95 active:translate-y-1" href="gameplay.html?level=12" aria-label="Level 12">
+<!-- Fluid Specular Glass Sheen -->
+<div class="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent pointer-events-none"></div>
+<div class="flex flex-col items-center">
+<span class="font-headline-md text-headline-md text-on-primary leading-none">12</span>
+</div>
+<!-- Mini Tactile "PLAY" Badge -->
+<div class="flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-surface-container-lowest text-primary font-label-sm text-label-sm shadow-sm">
+<span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">play_arrow</span>
+<span>PLAY</span>
+</div>
+</a>
+</div>
+<!-- Level 13 (Locked) -->
+<div class="aspect-square bg-surface-container-low rounded flex flex-col items-center justify-center gap-1 text-outline shadow-sm">
+<span class="material-symbols-outlined text-[20px]" aria-hidden="true">lock</span>
+<span class="font-label-md text-label-md text-outline">13</span>
+</div>
+<!-- Level 14 (Locked) -->
+<div class="aspect-square bg-surface-container-low rounded flex flex-col items-center justify-center gap-1 text-outline shadow-sm">
+<span class="material-symbols-outlined text-[20px]" aria-hidden="true">lock</span>
+<span class="font-label-md text-label-md text-outline">14</span>
+</div>
+<!-- Level 15 (Locked) -->
+<div class="aspect-square bg-surface-container-low rounded flex flex-col items-center justify-center gap-1 text-outline shadow-sm">
+<span class="material-symbols-outlined text-[20px]" aria-hidden="true">lock</span>
+<span class="font-label-md text-label-md text-outline">15</span>
+</div>
+<!-- Level 16 (Locked) -->
+<div class="aspect-square bg-surface-container-low rounded flex flex-col items-center justify-center gap-1 text-outline shadow-sm">
+<span class="material-symbols-outlined text-[20px]" aria-hidden="true">lock</span>
+<span class="font-label-md text-label-md text-outline">16</span>
+</div>
+<!-- Level 17 (Locked) -->
+<div class="aspect-square bg-surface-container-low rounded flex flex-col items-center justify-center gap-1 text-outline shadow-sm">
+<span class="material-symbols-outlined text-[20px]" aria-hidden="true">lock</span>
+<span class="font-label-md text-label-md text-outline">17</span>
+</div>
+<!-- Level 18 (Locked) -->
+<div class="aspect-square bg-surface-container-low rounded flex flex-col items-center justify-center gap-1 text-outline shadow-sm">
+<span class="material-symbols-outlined text-[20px]" aria-hidden="true">lock</span>
+<span class="font-label-md text-label-md text-outline">18</span>
+</div>
+<!-- Level 19 (Locked) -->
+<div class="aspect-square bg-surface-container-low rounded flex flex-col items-center justify-center gap-1 text-outline shadow-sm">
+<span class="material-symbols-outlined text-[20px]" aria-hidden="true">lock</span>
+<span class="font-label-md text-label-md text-outline">19</span>
+</div>
+<!-- Level 20 (Locked) -->
+<div class="aspect-square bg-surface-container-low rounded flex flex-col items-center justify-center gap-1 text-outline shadow-sm">
+<span class="material-symbols-outlined text-[20px]" aria-hidden="true">lock</span>
+<span class="font-label-md text-label-md text-outline">20</span>
+</div>
+</div>
+</section>
+<!-- SECTION 3: MEDIUM (PREVIEW LOCKED TILES) -->
+<section class="flex flex-col gap-space-sm opacity-85">
+<!-- Section Header -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Medium</h2>
+<span class="px-2.5 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm">
+            MEDIUM • 31–50
+          </span>
+</div>
+<div class="flex items-center gap-1 text-outline font-label-md text-label-md">
+<span class="material-symbols-outlined text-[15px]" aria-hidden="true">lock</span>
+<span>Unlocks at Lv. 31</span>
+</div>
+</div>
+<!-- 4-Column Grid Preview -->
+<div class="grid grid-cols-4 gap-3 w-full">
+<!-- Level 31 (Locked) -->
+<div class="aspect-square bg-surface-container-low/75 rounded flex flex-col items-center justify-center gap-1 text-outline/80">
+<span class="material-symbols-outlined text-[20px]" aria-hidden="true">lock</span>
+<span class="font-label-md text-label-md">31</span>
+</div>
+<!-- Level 32 (Locked) -->
+<div class="aspect-square bg-surface-container-low/75 rounded flex flex-col items-center justify-center gap-1 text-outline/80">
+<span class="material-symbols-outlined text-[20px]" aria-hidden="true">lock</span>
+<span class="font-label-md text-label-md">32</span>
+</div>
+<!-- Level 33 (Locked) -->
+<div class="aspect-square bg-surface-container-low/75 rounded flex flex-col items-center justify-center gap-1 text-outline/80">
+<span class="material-symbols-outlined text-[20px]" aria-hidden="true">lock</span>
+<span class="font-label-md text-label-md">33</span>
+</div>
+<!-- Level 34 (Locked) -->
+<div class="aspect-square bg-surface-container-low/75 rounded flex flex-col items-center justify-center gap-1 text-outline/80">
+<span class="material-symbols-outlined text-[20px]" aria-hidden="true">lock</span>
+<span class="font-label-md text-label-md">34</span>
+</div>
+</div>
+</section>
+</div>
+<!-- Bottom Floating Soft Play Card / Quick Resume Bar -->
+<div class="fixed bottom-[max(1.5rem,env(safe-area-inset-bottom))] inset-x-0 px-space-md z-40 pointer-events-none flex justify-center">
+<div class="pointer-events-auto w-full max-w-sm bg-surface-container-lowest/95 backdrop-blur-md rounded-full shadow-xl p-1.5 flex items-center justify-between">
+<div class="flex items-center gap-2 pl-3">
+<div class="w-8 h-8 rounded-full bg-primary-container text-on-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]" aria-hidden="true">play_circle</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-lg text-label-lg text-on-surface leading-tight">Level 12</span>
+<span class="font-label-sm text-label-sm text-secondary font-bold">In Progress</span>
+</div>
+</div>
+<!-- Tactile Jump-in Button -->
+<a class="h-10 px-5 rounded-full bg-primary-container text-on-primary font-label-lg text-label-lg shadow-md active:translate-y-0.5 transition-transform flex items-center gap-1" href="gameplay.html?level=12">
+<span>CONTINUE</span>
+<span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+</main>
+</body>
+</html>

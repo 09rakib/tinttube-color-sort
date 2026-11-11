@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html class="h-full" lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Glossy pour animation | TintTube</title>
+<link rel="stylesheet" href="assets/tailwind.css">
+<link rel="stylesheet" href="assets/ui.css">
+<script src="assets/ui.js" defer></script>
+
+<style>
+    /* Liquid Shimmer & Dynamic Physics Animations */
+    @keyframes liquidWave {
+      0%, 100% { transform: translateY(0) scaleY(1); }
+      50% { transform: translateY(-1.5px) scaleY(1.03); }
+    }
+    @keyframes subtleFlow {
+      0% { background-position: 0% 0%; }
+      50% { background-position: 100% 100%; }
+      100% { background-position: 0% 0%; }
+    }
+    @keyframes bubbleFloat {
+      0% { transform: translateY(6px) scale(0.7); opacity: 0; }
+      40% { opacity: 0.8; }
+      100% { transform: translateY(-14px) scale(1.1); opacity: 0; }
+    }
+    @keyframes pourStreamWobble {
+      0%, 100% { stroke-dashoffset: 0; }
+      50% { stroke-dashoffset: -12; }
+    }
+    @keyframes rippleExpand {
+      0% { transform: scale(0.6); opacity: 0.9; }
+      100% { transform: scale(1.4); opacity: 0; }
+    }
+    .liquid-wave {
+      animation: liquidWave 3s ease-in-out infinite;
+    }
+    .liquid-wave-fast {
+      animation: liquidWave 1.6s ease-in-out infinite;
+    }
+    .bubble-1 {
+      animation: bubbleFloat 2.4s ease-in infinite;
+    }
+    .bubble-2 {
+      animation: bubbleFloat 3.1s 0.9s ease-in infinite;
+    }
+    .stream-flow {
+      stroke-dasharray: 20 6;
+      animation: pourStreamWobble 1.2s linear infinite;
+    }
+    .ripple-ring {
+      animation: rippleExpand 1.3s cubic-bezier(0.2, 0.8, 0.4, 1) infinite;
+    }
+    .glass-tube {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0.18) 40%, rgba(255, 255, 255, 0.35) 100%);
+      backdrop-filter: blur(4px);
+      box-shadow: inset 2px 2px 5px rgba(255, 255, 255, 0.8), inset -2px -2px 6px rgba(0, 0, 0, 0.08), 0 10px 25px -4px rgba(25, 28, 33, 0.12);
+    }
+    .glass-specular-left {
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0.2) 40%, transparent 100%);
+    }
+    .glass-specular-right {
+      background: linear-gradient(-90deg, rgba(255, 255, 255, 0.45) 0%, transparent 100%);
+    }
+  </style>
+</head>
+<body data-screen="glossy-pouring" class="bg-surface text-on-surface font-body-md text-body-md min-h-screen flex flex-col relative select-none">
+<main class="flex-1 flex flex-col relative w-full h-full min-h-screen pt-safe pb-safe px-margin bg-surface">
+<div class="flex flex-col w-full relative select-none pb-6">
+<!-- Ambient Light Orbs & Floating Game Atmosphere -->
+<div class="absolute -top-10 left-1/2 -translate-x-1/2 w-72 h-72 bg-primary-fixed/30 rounded-full blur-3xl pointer-events-none -z-10"></div>
+<div class="absolute top-1/3 -left-12 w-48 h-48 bg-secondary-fixed/40 rounded-full blur-2xl pointer-events-none -z-10"></div>
+<div class="absolute bottom-1/4 -right-12 w-56 h-56 bg-tertiary-fixed/30 rounded-full blur-2xl pointer-events-none -z-10"></div>
+<!-- TOP FLOATING HEADER ZONE -->
+<header class="w-full flex items-center justify-between pt-1 px-1">
+<!-- Back / Menu Glass Button -->
+<a aria-label="Exit Game" class="w-12 h-12 rounded-full bg-surface-container-lowest shadow-md flex items-center justify-center text-primary active:scale-90 transition-transform duration-150" href="gameplay.html">
+<span class="material-symbols-outlined text-headline-sm font-headline-sm" aria-hidden="true">arrow_back</span>
+</a>
+<!-- Center Level & Difficulty Badge -->
+<div class="flex flex-col items-center">
+<span class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Level 12</span>
+<div class="inline-flex items-center gap-1 bg-secondary-container/50 px-3 py-0.5 rounded-full mt-0.5">
+<span class="material-symbols-outlined text-tertiary text-label-sm animate-spin" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">water_drop</span>
+<span class="font-label-sm text-label-sm text-tertiary uppercase tracking-wider font-extrabold">Pouring...</span>
+</div>
+</div>
+<!-- Coin Vault Pill -->
+<div class="flex items-center gap-1.5 bg-surface-container-lowest px-3 py-1.5 rounded-full shadow-md">
+<div class="w-6 h-6 rounded-full bg-tertiary-container flex items-center justify-center text-on-tertiary text-label-sm shadow-inner">
+<span class="material-symbols-outlined text-label-md" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">monetization_on</span>
+</div>
+<span class="font-counter-numeral text-counter-numeral text-on-surface tracking-tight font-black">1,250</span>
+</div>
+</header>
+<!-- SUB-HEADER: MOVES & STATS DOCK -->
+<div class="flex justify-center mt-3">
+<div class="inline-flex items-center gap-2 bg-surface-container-low px-4 py-1.5 rounded-full shadow-sm">
+<span class="material-symbols-outlined text-tertiary text-body-md animate-bounce" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">water_ph</span>
+<span class="font-label-lg text-label-lg text-on-surface tracking-wide">Pouring <span class="text-tertiary font-black font-counter-numeral">#3</span> → <span class="text-primary font-black font-counter-numeral">#7</span></span>
+<div class="flex items-center gap-1 ml-1">
+<span class="w-2 h-2 rounded-full bg-tertiary animate-ping"></span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+</div>
+</div>
+</div>
+<!-- GAME BOARD VIEWPORT (TEST TUBE MATRIX) -->
+<section aria-label="Puzzle board" class="w-full flex flex-col items-center justify-center my-6 gap-6 relative" id="puzzle-board">
+<!-- ROW 1 (4 Tubes) -->
+<div class="flex items-end justify-center gap-3.5 w-full">
+<!-- Tube 1 -->
+<div class="tube-container group flex flex-col items-center relative " data-tube-id="1">
+<div class="tube-rim w-14 h-3 bg-surface-container-lowest/90 border border-white/80 rounded-full shadow-md mb-[-6px] z-20 backdrop-blur-sm"></div>
+<div class="tube-glass w-14 h-48 glass-tube rounded-b-full p-1 flex flex-col-reverse relative overflow-hidden transition-all duration-300">
+<!-- Glass Specular Vertical Highlights -->
+<div class="absolute left-1.5 top-1 bottom-4 w-1 glass-specular-left rounded-full z-10 pointer-events-none"></div>
+<div class="absolute right-1 top-2 bottom-6 w-0.5 glass-specular-right rounded-full z-10 pointer-events-none opacity-60"></div>
+<!-- Layer 1 (Bottom): Red / Error -->
+<div class="w-full h-1/4 relative rounded-b-3xl overflow-hidden shadow-inner bg-gradient-to-r from-[#ba1a1a] via-[#e23030] to-[#9b0b0b]">
+<div class="absolute inset-x-0 bottom-0 top-0 bg-gradient-to-t from-black/25 via-transparent to-white/20"></div>
+<div class="absolute -top-1 inset-x-0 h-2 bg-white/30 rounded-full blur-[0.5px]"></div>
+<div class="absolute bottom-2 left-3 w-1 h-1 bg-white/40 rounded-full bubble-1"></div>
+</div>
+<!-- Layer 2: Deep Teal / Secondary -->
+<div class="w-full h-1/4 relative overflow-hidden shadow-inner bg-gradient-to-r from-[#005753] via-[#007f79] to-[#004f4b]">
+<div class="absolute inset-x-0 bottom-0 top-0 bg-gradient-to-t from-black/20 via-transparent to-white/20"></div>
+<div class="absolute -top-1 inset-x-0 h-2 bg-secondary-fixed/30 rounded-full blur-[0.5px]"></div>
+<div class="absolute bottom-2 right-3 w-1.5 h-1.5 bg-white/40 rounded-full bubble-2"></div>
+</div>
+<!-- Layer 3: Warm Caramel / Tertiary-Container -->
+<div class="w-full h-1/4 relative overflow-hidden shadow-inner bg-gradient-to-r from-[#914a00] via-[#c66800] to-[#7f4000]">
+<div class="absolute inset-x-0 bottom-0 top-0 bg-gradient-to-t from-black/20 via-transparent to-white/25"></div>
+<div class="absolute -top-1 inset-x-0 h-2 bg-tertiary-fixed/40 rounded-full blur-[0.5px]"></div>
+</div>
+<!-- Layer 4 (Top): Royal Purple / Primary -->
+<div class="w-full h-1/4 relative rounded-t-lg overflow-hidden shadow-inner bg-gradient-to-r from-[#402fb0] via-[#5c4ae6] to-[#3a29a4]">
+<div class="absolute inset-x-0 bottom-0 top-0 bg-gradient-to-t from-black/20 via-transparent to-white/30"></div>
+<!-- Meniscus Curve at Top -->
+<div class="absolute top-0 inset-x-0 h-2 bg-gradient-to-b from-white/60 via-primary-fixed-dim/40 to-transparent rounded-full liquid-wave"></div>
+<div class="absolute top-0.5 inset-x-1.5 h-1 bg-white/70 rounded-full blur-[0.5px]"></div>
+</div>
+</div>
+<div class="tube-shadow w-11 h-2 bg-inverse-surface/15 rounded-full mt-2 blur-[2px]"></div>
+</div>
+<!-- Tube 2 -->
+<div class="tube-container group flex flex-col items-center relative " data-tube-id="2">
+<div class="tube-rim w-14 h-3 bg-surface-container-lowest/90 border border-white/80 rounded-full shadow-md mb-[-6px] z-20 backdrop-blur-sm"></div>
+<div class="tube-glass w-14 h-48 glass-tube rounded-b-full p-1 flex flex-col-reverse relative overflow-hidden transition-all duration-300">
+<!-- Specular -->
+<div class="absolute left-1.5 top-1 bottom-4 w-1 glass-specular-left rounded-full z-10 pointer-events-none"></div>
+<div class="absolute right-1 top-2 bottom-6 w-0.5 glass-specular-right rounded-full z-10 pointer-events-none opacity-60"></div>
+<!-- Layer 1: Aqua / Secondary Container -->
+<div class="w-full h-1/4 relative rounded-b-3xl overflow-hidden shadow-inner bg-gradient-to-r from-[#5ed5ce] via-[#8af7f1] to-[#4ac0b9]">
+<div class="absolute inset-x-0 bottom-0 top-0 bg-gradient-to-t from-black/15 via-transparent to-white/30"></div>
+<div class="absolute -top-1 inset-x-0 h-2 bg-white/40 rounded-full blur-[0.5px]"></div>
+<div class="absolute bottom-2 left-2 w-1 h-1 bg-white/50 rounded-full bubble-1"></div>
+</div>
+<!-- Layer 2: Amber Brown / Tertiary -->
+<div class="w-full h-1/4 relative overflow-hidden shadow-inner bg-gradient-to-r from-[#7a3e00] via-[#a35400] to-[#6d3700]">
+<div class="absolute inset-x-0 bottom-0 top-0 bg-gradient-to-t from-black/20 via-transparent to-white/20"></div>
+<div class="absolute -top-1 inset-x-0 h-2 bg-tertiary-fixed/30 rounded-full blur-[0.5px]"></div>
+</div>
+<!-- Layer 3: Vibrant Crimson / Error -->
+<div class="w-full h-1/4 relative overflow-hidden shadow-inner bg-gradient-to-r from-[#ba1a1a] via-[#e23030] to-[#9b0b0b]">
+<div class="absolute inset-x-0 bottom-0 top-0 bg-gradient-to-t from-black/20 via-transparent to-white/25"></div>
+<div class="absolute -top-1 inset-x-0 h-2 bg-white/30 rounded-full blur-[0.5px]"></div>
+</div>
+<!-- Layer 4: Deep Teal / Secondary -->
+<div class="w-full h-1/4 relative rounded-t-lg overflow-hidden shadow-inner bg-gradient-to-r from-[#005753] via-[#007f79] to-[#004f4b]">
+<div class="absolute inset-x-0 bottom-0 top-0 bg-gradient-to-t from-black/20 via-transparent to-white/30"></div>
+<!-- Meniscus Curve at Top -->
+<div class="absolute top-0 inset-x-0 h-2 bg-gradient-to-b from-white/60 via-secondary-fixed/40 to-transparent rounded-full liquid-wave"></div>
+<div class="absolute top-0.5 inset-x-1.5 h-1 bg-white/70 rounded-full blur-[0.5px]"></div>
+</div>
+</div>
+<div class="tube-shadow w-11 h-2 bg-inverse-surface/15 rounded-full mt-2 blur-[2px]"></div>
+</div>
+<!-- Tube 3 (Selected & Tilted Pouring State) -->
+<div class="tube-container pour-source relative z-30 flex flex-col items-center" data-tube-id="3">
+<div class="absolute -inset-4 bg-tertiary-fixed/40 rounded-full blur-xl pointer-events-none -z-10 animate-pulse"></div>
+<!-- Pour Glow Indicator -->
+<div class="absolute -top-3 -right-2 flex gap-1 z-40">
+<span class="w-2.5 h-2.5 rounded-full bg-tertiary-container shadow-md animate-ping"></span>
+<span class="w-2 h-2 rounded-full bg-tertiary-fixed shadow-sm"></span>
+</div>
+<!-- Glass Tube Rim -->
+<div class="tube-rim w-14 h-3.5 bg-surface-container-lowest/90 border border-amber-300/80 ring-2 ring-tertiary/40 rounded-full shadow-lg mb-[-6px] z-20 relative flex items-center justify-center overflow-hidden">
+<!-- Fluid exiting rim lip highlight -->
+<div class="absolute inset-x-2 h-2 bg-gradient-to-r from-[#ab5900] via-[#ffdcc4] to-[#874500] rounded-full opacity-90 blur-[0.5px]"></div>
+</div>
+<div class="tube-glass w-14 h-48 glass-tube rounded-b-full shadow-2xl p-1 flex flex-col-reverse relative overflow-hidden ring-2 ring-tertiary/50">
+<!-- Specular Tube Glare -->
+<div class="absolute left-1.5 top-1 bottom-4 w-1 glass-specular-left rounded-full z-10 pointer-events-none opacity-80"></div>
+<div class="absolute right-1 top-2 bottom-6 w-0.5 glass-specular-right rounded-full z-10 pointer-events-none opacity-50"></div>
+<!-- Layer 1: Indigo / Primary -->
+<div class="w-full h-1/4 relative rounded-b-3xl overflow-hidden shadow-inner bg-gradient-to-r from-[#402fb0] via-[#5c4ae6] to-[#3a29a4]">
+<div class="absolute inset-0 bg-gradient-to-t from-black/20 to-white/20"></div>
+<div class="absolute -top-1 inset-x-0 h-1.5 bg-white/25 rounded-full"></div>
+</div>
+<!-- Layer 2: Warm Caramel / Tertiary-Container -->
+<div class="w-full h-1/4 relative overflow-hidden shadow-inner bg-gradient-to-r from-[#914a00] via-[#c66800] to-[#7f4000]">
+<div class="absolute inset-0 bg-gradient-to-t from-black/20 to-white/20"></div>
+<div class="absolute -top-1 inset-x-0 h-1.5 bg-tertiary-fixed/30 rounded-full"></div>
+</div>
+<!-- Layer 3: Cyan / Secondary-Container -->
+<div class="w-full h-1/4 relative overflow-hidden shadow-inner bg-gradient-to-r from-[#5ed5ce] via-[#8af7f1] to-[#4ac0b9]">
+<div class="absolute inset-0 bg-gradient-to-t from-black/15 to-white/30"></div>
+<div class="absolute -top-1 inset-x-0 h-1.5 bg-white/40 rounded-full"></div>
+</div>
+<!-- Layer 4 (Top - actively pouring out): Amber Brown / Tertiary with dynamic slanted meniscus -->
+<div class="w-full h-1/4 relative overflow-hidden rounded-t-lg">
+<!-- Fluid clipped at gravity slant angle for realistic liquid tilt -->
+<div class="absolute inset-0 bg-gradient-to-tr from-[#7a3e00] via-[#b35e00] to-[#ffb781] shadow-inner" style="clip-path: polygon(0 42%, 100% 0%, 100% 100%, 0% 100%);">
+<!-- Glossy highlight on tilted surface -->
+<div class="absolute inset-0 bg-gradient-to-t from-transparent via-white/10 to-white/30"></div>
+<div class="absolute top-0 right-0 left-0 h-2 bg-gradient-to-r from-transparent via-white/70 to-amber-100 blur-[0.5px]"></div>
+</div>
+<!-- Floating micro-bubbles near the pour mouth -->
+<div class="absolute top-1 right-2 w-1.5 h-1.5 bg-white/80 rounded-full blur-[0.5px] animate-ping"></div>
+<div class="absolute top-2 right-4 w-1 h-1 bg-tertiary-fixed rounded-full"></div>
+</div>
+</div>
+<div class="tube-shadow w-12 h-2.5 bg-tertiary/25 rounded-full mt-3 blur-sm scale-90"></div>
+</div>
+<!-- Tube 4 -->
+<div class="tube-container group flex flex-col items-center relative " data-tube-id="4">
+<div class="tube-rim w-14 h-3 bg-surface-container-lowest/90 border border-white/80 rounded-full shadow-md mb-[-6px] z-20 backdrop-blur-sm"></div>
+<div class="tube-glass w-14 h-48 glass-tube rounded-b-full p-1 flex flex-col-reverse relative overflow-hidden transition-all duration-300">
+<!-- Specular -->
+<div class="absolute left-1.5 top-1 bottom-4 w-1 glass-specular-left rounded-full z-10 pointer-events-none"></div>
+<div class="absolute right-1 top-2 bottom-6 w-0.5 glass-specular-right rounded-full z-10 pointer-events-none opacity-60"></div>
+<!-- Layer 1: Deep Teal / Secondary -->
+<div class="w-full h-1/4 relative rounded-b-3xl overflow-hidden shadow-inner bg-gradient-to-r from-[#005753] via-[#007f79] to-[#004f4b]">
+<div class="absolute inset-x-0 bottom-0 top-0 bg-gradient-to-t from-black/20 via-transparent to-white/20"></div>
+<div class="absolute -top-1 inset-x-0 h-2 bg-secondary-fixed/30 rounded-full blur-[0.5px]"></div>
+</div>
+<!-- Layer 2: Red / Error -->
+<div class="w-full h-1/4 relative overflow-hidden shadow-inner bg-gradient-to-r from-[#ba1a1a] via-[#e23030] to-[#9b0b0b]">
+<div class="absolute inset-x-0 bottom-0 top-0 bg-gradient-to-t from-black/20 via-transparent to-white/20"></div>
+<div class="absolute -top-1 inset-x-0 h-2 bg-white/30 rounded-full blur-[0.5px]"></div>
+</div>
+<!-- Layer 3: Amber / Tertiary -->
+<div class="w-full h-1/4 relative overflow-hidden shadow-inner bg-gradient-to-r from-[#7a3e00] via-[#a35400] to-[#6d3700]">
+<div class="absolute inset-x-0 bottom-0 top-0 bg-gradient-to-t from-black/20 via-transparent to-white/25"></div>
+<div class="absolute -top-1 inset-x-0 h-2 bg-tertiary-fixed/30 rounded-full blur-[0.5px]"></div>
+</div>
+<!-- Layer 4: Warm Caramel / Tertiary-Container -->
+<div class="w-full h-1/4 relative rounded-t-lg overflow-hidden shadow-inner bg-gradient-to-r from-[#914a00] via-[#c66800] to-[#7f4000]">
+<div class="absolute inset-x-0 bottom-0 top-0 bg-gradient-to-t from-black/20 via-transparent to-white/30"></div>
+<!-- Meniscus Curve at Top -->
+<div class="absolute top-0 inset-x-0 h-2 bg-gradient-to-b from-white/60 via-tertiary-fixed/40 to-transparent rounded-full liquid-wave"></div>
+<div class="absolute top-0.5 inset-x-1.5 h-1 bg-white/70 rounded-full blur-[0.5px]"></div>
+</div>
+</div>
+<div class="tube-shadow w-11 h-2 bg-inverse-surface/15 rounded-full mt-2 blur-[2px]"></div>
+</div>
+</div>
+<!-- ROW 2 (3 Tubes) -->
+<div class="flex items-end justify-center gap-5 w-full mt-1">
+<!-- Tube 5 -->
+<div class="tube-container group flex flex-col items-center relative " data-tube-id="5">
+<div class="tube-rim w-14 h-3 bg-surface-container-lowest/90 border border-white/80 rounded-full shadow-md mb-[-6px] z-20 backdrop-blur-sm"></div>
+<div class="tube-glass w-14 h-48 glass-tube rounded-b-full p-1 flex flex-col-reverse relative overflow-hidden transition-all duration-300">
+<!-- Specular -->
+<div class="absolute left-1.5 top-1 bottom-4 w-1 glass-specular-left rounded-full z-10 pointer-events-none"></div>
+<div class="absolute right-1 top-2 bottom-6 w-0.5 glass-specular-right rounded-full z-10 pointer-events-none opacity-60"></div>
+<!-- Layer 1: Indigo / Primary -->
+<div class="w-full h-1/4 relative rounded-b-3xl overflow-hidden shadow-inner bg-gradient-to-r from-[#402fb0] via-[#5c4ae6] to-[#3a29a4]">
+<div class="absolute inset-x-0 bottom-0 top-0 bg-gradient-to-t from-black/20 via-transparent to-white/20"></div>
+<div class="absolute -top-1 inset-x-0 h-2 bg-primary-fixed-dim/30 rounded-full blur-[0.5px]"></div>
+</div>
+<!-- Layer 2: Aqua / Secondary Container -->
+<div class="w-full h-1/4 relative overflow-hidden shadow-inner bg-gradient-to-r from-[#5ed5ce] via-[#8af7f1] to-[#4ac0b9]">
+<div class="absolute inset-x-0 bottom-0 top-0 bg-gradient-to-t from-black/15 via-transparent to-white/30"></div>
+<div class="absolute -top-1 inset-x-0 h-2 bg-white/40 rounded-full blur-[0.5px]"></div>
+</div>
+<!-- Layer 3: Deep Teal / Secondary -->
+<div class="w-full h-1/4 relative overflow-hidden shadow-inner bg-gradient-to-r from-[#005753] via-[#007f79] to-[#004f4b]">
+<div class="absolute inset-x-0 bottom-0 top-0 bg-gradient-to-t from-black/20 via-transparent to-white/20"></div>
+<div class="absolute -top-1 inset-x-0 h-2 bg-secondary-fixed/30 rounded-full blur-[0.5px]"></div>
+</div>
+<!-- Layer 4: Red / Error -->
+<div class="w-full h-1/4 relative rounded-t-lg overflow-hidden shadow-inner bg-gradient-to-r from-[#ba1a1a] via-[#e23030] to-[#9b0b0b]">
+<div class="absolute inset-x-0 bottom-0 top-0 bg-gradient-to-t from-black/20 via-transparent to-white/30"></div>
+<!-- Meniscus Curve at Top -->
+<div class="absolute top-0 inset-x-0 h-2 bg-gradient-to-b from-white/60 via-red-200 to-transparent rounded-full liquid-wave"></div>
+<div class="absolute top-0.5 inset-x-1.5 h-1 bg-white/70 rounded-full blur-[0.5px]"></div>
+</div>
+</div>
+<div class="tube-shadow w-11 h-2 bg-inverse-surface/15 rounded-full mt-2 blur-[2px]"></div>
+</div>
+<!-- Tube 6 -->
+<div class="tube-container group flex flex-col items-center relative " data-tube-id="6">
+<div class="tube-rim w-14 h-3 bg-surface-container-lowest/90 border border-white/80 rounded-full shadow-md mb-[-6px] z-20 backdrop-blur-sm"></div>
+<div class="tube-glass w-14 h-48 glass-tube rounded-b-full p-1 flex flex-col-reverse relative overflow-hidden transition-all duration-300">
+<!-- Specular -->
+<div class="absolute left-1.5 top-1 bottom-4 w-1 glass-specular-left rounded-full z-10 pointer-events-none"></div>
+<div class="absolute right-1 top-2 bottom-6 w-0.5 glass-specular-right rounded-full z-10 pointer-events-none opacity-60"></div>
+<!-- Layer 1: Amber / Tertiary -->
+<div class="w-full h-1/4 relative rounded-b-3xl overflow-hidden shadow-inner bg-gradient-to-r from-[#7a3e00] via-[#a35400] to-[#6d3700]">
+<div class="absolute inset-x-0 bottom-0 top-0 bg-gradient-to-t from-black/20 via-transparent to-white/20"></div>
+<div class="absolute -top-1 inset-x-0 h-2 bg-tertiary-fixed/30 rounded-full blur-[0.5px]"></div>
+</div>
+<!-- Layer 2: Warm Caramel / Tertiary-Container -->
+<div class="w-full h-1/4 relative overflow-hidden shadow-inner bg-gradient-to-r from-[#914a00] via-[#c66800] to-[#7f4000]">
+<div class="absolute inset-x-0 bottom-0 top-0 bg-gradient-to-t from-black/20 via-transparent to-white/25"></div>
+<div class="absolute -top-1 inset-x-0 h-2 bg-tertiary-fixed/40 rounded-full blur-[0.5px]"></div>
+</div>
+<!-- Layer 3: Indigo / Primary -->
+<div class="w-full h-1/4 relative overflow-hidden shadow-inner bg-gradient-to-r from-[#402fb0] via-[#5c4ae6] to-[#3a29a4]">
+<div class="absolute inset-x-0 bottom-0 top-0 bg-gradient-to-t from-black/20 via-transparent to-white/20"></div>
+<div class="absolute -top-1 inset-x-0 h-2 bg-primary-fixed-dim/30 rounded-full blur-[0.5px]"></div>
+</div>
+<!-- Layer 4: Aqua / Secondary Container -->
+<div class="w-full h-1/4 relative rounded-t-lg overflow-hidden shadow-inner bg-gradient-to-r from-[#5ed5ce] via-[#8af7f1] to-[#4ac0b9]">
+<div class="absolute inset-x-0 bottom-0 top-0 bg-gradient-to-t from-black/15 via-transparent to-white/30"></div>
+<!-- Meniscus Curve at Top -->
+<div class="absolute top-0 inset-x-0 h-2 bg-gradient-to-b from-white/60 via-secondary-container to-transparent rounded-full liquid-wave"></div>
+<div class="absolute top-0.5 inset-x-1.5 h-1 bg-white/70 rounded-full blur-[0.5px]"></div>
+</div>
+</div>
+<div class="tube-shadow w-11 h-2 bg-inverse-surface/15 rounded-full mt-2 blur-[2px]"></div>
+</div>
+<!-- Tube 7 (Target Tube with Pouring Liquid & Dynamic Stream) -->
+<div class="tube-container relative flex flex-col items-center z-20" data-tube-id="7">
+<!-- Glossy Laminar Fluid Pouring Stream SVG -->
+<svg class="absolute pointer-events-none -z-0 overflow-visible" aria-hidden="true" style="right: 8px; top: -148px; width: 146px; height: 168px;">
+<defs>
+<lineargradient id="richFluidGrad" x1="0%" x2="100%" y1="0%" y2="100%">
+<stop offset="0%" stop-color="#ffdcc4" stop-opacity="0.95"></stop>
+<stop offset="25%" stop-color="#ffb781" stop-opacity="0.95"></stop>
+<stop offset="65%" stop-color="#ab5900" stop-opacity="0.9"></stop>
+<stop offset="100%" stop-color="#874500" stop-opacity="0.95"></stop>
+</lineargradient>
+<lineargradient id="streamHighlightGrad" x1="0%" x2="0%" y1="0%" y2="100%">
+<stop offset="0%" stop-color="#ffffff" stop-opacity="0.9"></stop>
+<stop offset="50%" stop-color="#ffdcc4" stop-opacity="0.8"></stop>
+<stop offset="100%" stop-color="#ffb781" stop-opacity="0.4"></stop>
+</lineargradient>
+<filter height="160%" id="fluidGlow" width="160%" x="-30%" y="-30%">
+<fegaussianblur in="SourceGraphic" result="blur" stddeviation="2.5"></fegaussianblur>
+<femerge>
+<femergenode in="blur"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+</defs>
+<!-- Outer fluid body (rich translucent amber) -->
+<path d="M 42 12 C 69 32, 122 75, 126 150" fill="none" filter="url(#fluidGlow)" stroke="url(#richFluidGrad)" stroke-linecap="round" stroke-width="11"></path>
+<!-- Core laminar spine -->
+<path d="M 42 12 C 69 32, 122 75, 126 150" fill="none" stroke="#ab5900" stroke-linecap="round" stroke-width="7"></path>
+<!-- High-gloss specular center highlight (organic flow) -->
+<path class="stream-flow" d="M 42 12 C 69 32, 122 75, 126 150" fill="none" stroke="url(#streamHighlightGrad)" stroke-linecap="round" stroke-width="2.5"></path>
+<!-- Dynamic fluid droplet particles in transit -->
+<circle cx="65" cy="36" fill="#ffdcc4" filter="url(#fluidGlow)" r="2.5">
+<animate attributename="opacity" dur="1s" repeatcount="indefinite" values="0.9;0.3;0.9"></animate>
+</circle>
+<circle cx="106" cy="79" fill="#ffb781" r="2"></circle>
+<circle cx="121" cy="116" fill="#ffdcc4" r="2.2"></circle>
+<circle cx="125" cy="138" fill="#ffffff" opacity="0.8" r="1.5"></circle>
+</svg>
+<!-- Pour Impact Droplets & Splashes at Tube Mouth -->
+<div class="absolute -top-1 left-1/2 -translate-x-1/2 z-30 pointer-events-none flex items-center justify-center">
+<div class="w-3.5 h-3.5 bg-tertiary-fixed rounded-full animate-ping opacity-60"></div>
+<div class="absolute -top-2 left-[-6px] w-2 h-2 bg-white rounded-full blur-[0.5px]"></div>
+<div class="absolute -top-3.5 right-[-5px] w-2 h-2 bg-tertiary-fixed rounded-full shadow-sm"></div>
+<div class="absolute -top-1 right-2 w-1.5 h-1.5 bg-amber-300 rounded-full animate-pulse"></div>
+</div>
+<!-- Glass Rim -->
+<div class="tube-rim w-14 h-3 bg-surface-container-lowest/90 border border-white/80 rounded-full shadow-md mb-[-6px] z-20 ring-2 ring-tertiary/30 backdrop-blur-sm"></div>
+<div class="tube-glass w-14 h-48 glass-tube rounded-b-full shadow-xl p-1 flex flex-col-reverse relative overflow-hidden transition-all duration-300 ring-1 ring-tertiary/20">
+<!-- Glass Specular Highlight -->
+<div class="absolute left-1.5 top-1 bottom-4 w-1 glass-specular-left rounded-full z-10 pointer-events-none"></div>
+<div class="absolute right-1 top-2 bottom-6 w-0.5 glass-specular-right rounded-full z-10 pointer-events-none opacity-60"></div>
+<!-- Layer 1 (Rising Amber Fluid Layer) -->
+<div class="w-full h-1/4 relative rounded-b-3xl overflow-hidden shadow-inner bg-gradient-to-r from-[#7a3e00] via-[#ab5900] to-[#6d3700] flex flex-col items-center justify-center">
+<!-- Internal fluid glow & depth -->
+<div class="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-white/20"></div>
+<!-- Surface meniscus & bubbling impact ripples -->
+<div class="absolute top-0 inset-x-0 h-2 bg-gradient-to-b from-white/70 via-tertiary-fixed/60 to-transparent rounded-full liquid-wave-fast"></div>
+<div class="absolute -top-1 left-2 right-2 h-2 rounded-full border border-white/70 ripple-ring pointer-events-none"></div>
+<!-- Micro Bubbles rising in freshly poured liquid -->
+<div class="absolute top-2 left-2.5 w-1.5 h-1.5 rounded-full bg-white/70 bubble-1"></div>
+<div class="absolute top-3 right-3 w-1.5 h-1.5 rounded-full bg-amber-100/80 bubble-2"></div>
+<div class="absolute bottom-1.5 left-4 w-1 h-1 rounded-full bg-white/50"></div>
+</div>
+<!-- Empty Tube Volume with measurement volume guide marks -->
+<div class="w-full h-3/4 flex flex-col justify-around py-3 px-1.5 opacity-30">
+<div class="w-full h-[1px] bg-primary/40 rounded-full"></div>
+<div class="w-full h-[1px] bg-primary/40 rounded-full"></div>
+</div>
+</div>
+<div class="tube-shadow w-12 h-2 bg-tertiary/30 rounded-full mt-2 blur-[2px]"></div>
+</div>
+</div>
+</section>
+<!-- BOTTOM FLOATING ACTION BAR DOCK -->
+<footer class="w-full mt-auto pt-2">
+<div class="w-full bg-surface-container-lowest/90 backdrop-blur-md rounded-2xl shadow-xl px-4 py-3 flex items-center justify-between">
+<!-- 1. Undo Booster -->
+<div class="flex flex-col items-center gap-1.5">
+<button aria-label="Undo Move" class="relative w-14 h-14 rounded-2xl bg-surface-container-low shadow-sm flex items-center justify-center text-primary active:translate-y-1 active:shadow-none transition-all" disabled>
+<span class="material-symbols-outlined text-headline-sm" aria-hidden="true">undo</span>
+<span class="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-primary text-on-primary font-counter-numeral text-label-sm flex items-center justify-center shadow-sm">3</span>
+</button>
+<span class="font-label-sm text-label-sm text-on-surface-variant tracking-wider uppercase">Undo</span>
+</div>
+<!-- 2. Restart Booster -->
+<div class="flex flex-col items-center gap-1.5">
+<button aria-label="Restart Level" class="w-14 h-14 rounded-2xl bg-secondary-container/50 shadow-sm flex items-center justify-center text-secondary active:translate-y-1 active:shadow-none transition-all" disabled>
+<span class="material-symbols-outlined text-headline-sm" aria-hidden="true">refresh</span>
+</button>
+<span class="font-label-sm text-label-sm text-on-surface-variant tracking-wider uppercase">Restart</span>
+</div>
+<!-- 3. Hint Booster -->
+<div class="flex flex-col items-center gap-1.5">
+<button aria-label="Get Hint" class="relative w-14 h-14 rounded-2xl bg-tertiary-fixed shadow-sm flex items-center justify-center text-on-tertiary-fixed-variant active:translate-y-1 active:shadow-none transition-all" disabled>
+<span class="material-symbols-outlined text-headline-sm" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">lightbulb</span>
+<span class="absolute -top-2 -right-2 px-1.5 py-0.5 rounded-full bg-tertiary text-on-tertiary font-label-sm text-label-sm flex items-center shadow-sm">
+              +50
+            </span>
+</button>
+<span class="font-label-sm text-label-sm text-on-surface-variant tracking-wider uppercase">Hint</span>
+</div>
+<!-- 4. Pause / Settings Booster -->
+<div class="flex flex-col items-center gap-1.5">
+<a aria-label="Pause Game" class="w-14 h-14 rounded-2xl bg-surface-container-low shadow-sm flex items-center justify-center text-outline active:translate-y-1 active:shadow-none transition-all" href="gameplay.html">
+<span class="material-symbols-outlined text-headline-sm" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">pause</span>
+</a>
+<span class="font-label-sm text-label-sm text-on-surface-variant tracking-wider uppercase">Pause</span>
+</div>
+</div>
+</footer>
+</div>
+</main>
+</body>
+</html>

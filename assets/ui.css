@@ -1,0 +1,156 @@
+@font-face {
+  font-family: "Nunito Sans";
+  src: url("fonts/nunito-sans.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 200 1000;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Material Symbols Outlined";
+  src: url("fonts/material-symbols-outlined.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 700;
+  font-display: block;
+}
+
+html {
+  background: #e8e7f8;
+  overflow-x: hidden;
+}
+
+body {
+  max-width: 30rem;
+  min-height: 100dvh;
+  margin-inline: auto;
+  font-family: "Nunito Sans", sans-serif;
+  overflow-x: clip;
+}
+
+.material-symbols-outlined {
+  display: inline-block;
+  font-family: "Material Symbols Outlined";
+  font-feature-settings: "liga";
+  font-weight: 400;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  -webkit-font-smoothing: antialiased;
+}
+
+.pt-safe {
+  padding-top: max(0.75rem, env(safe-area-inset-top));
+}
+
+.pb-safe {
+  padding-bottom: max(2.25rem, env(safe-area-inset-bottom));
+}
+
+:where(a, button):focus-visible {
+  outline: 3px solid #4e3dce;
+  outline-offset: 3px;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.tube-btn[aria-pressed="true"] {
+  overflow: visible;
+  transform: translateY(-1rem) rotate(1deg);
+  box-shadow: 0 0 0 4px #6759e8, 0 12px 24px #4e3dce66;
+}
+
+.tube-btn[aria-pressed="true"]::after {
+  content: "auto_awesome" / "";
+  position: absolute;
+  inset: -0.75rem -0.5rem auto auto;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: #6759e8;
+  color: #fff;
+  font: 16px/1 "Material Symbols Outlined";
+  box-shadow: 0 3px 6px #241d6b33;
+}
+
+[data-glyphs="off"] .tube-btn .material-symbols-outlined {
+  visibility: hidden;
+}
+
+.pour-source {
+  transform: translate(-41px, 91px) rotate(-115deg) scale(0.82);
+  transform-origin: 50% 0;
+}
+
+@keyframes shimmer {
+  to { transform: translateX(100%); }
+}
+
+.preview-menu {
+  width: min(calc(100% - 2rem), 24rem);
+  max-height: calc(100dvh - 2rem);
+  padding: 1.25rem;
+  border-radius: 1.75rem;
+  color: #24243a;
+  background: #fff;
+  box-shadow: 0 20px 40px #24243a40;
+}
+
+.preview-menu::backdrop {
+  background: #24243a80;
+  backdrop-filter: blur(6px);
+}
+
+.preview-menu a {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  background: #f2f3fb;
+  font-weight: 800;
+}
+
+.preview-menu a:hover {
+  background: #e4dfff;
+}
+
+[data-screen="shop"] [role="tab"][aria-selected="true"] {
+  color: #fff;
+  background: #6759e8;
+  box-shadow: 0 2px 4px #4e3dce33;
+}
+
+[data-screen="settings"] [role="switch"][aria-checked="true"] {
+  justify-content: flex-end;
+  background: #6759e8;
+}
+
+[data-screen="settings"] [role="switch"][aria-checked="false"] {
+  justify-content: flex-start;
+  background: #d8dae1;
+}
+
+@media (max-width: 379px) {
+  [data-screen="gameplay"] .tube-btn {
+    height: 11.25rem;
+  }
+
+  [data-screen="pouring"] .tube-container,
+  [data-screen="glossy-pouring"] .tube-container {
+    min-width: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

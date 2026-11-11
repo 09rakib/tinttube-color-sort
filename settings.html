@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html class="h-full" lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Settings | TintTube</title>
+<link rel="stylesheet" href="assets/tailwind.css">
+<link rel="stylesheet" href="assets/ui.css">
+<script src="assets/ui.js" defer></script>
+
+  </head>
+<body data-screen="settings" class="bg-gradient-to-b from-[#F6F7FF] via-[#F2F3FB] to-[#EBE9FE] min-h-screen text-on-surface flex flex-col relative select-none">
+<main class="flex-1 flex flex-col relative w-full pt-safe pb-safe"><div class="flex flex-col w-full px-margin pb-space-xl relative overflow-hidden select-none">
+<!-- Ambient Floating Bubbles / Laboratory Fluid Orbs Background -->
+<div class="absolute -top-10 -right-8 w-40 h-40 rounded-full bg-primary-fixed-dim/25 blur-2xl pointer-events-none"></div>
+<div class="absolute top-1/3 -left-12 w-48 h-48 rounded-full bg-secondary-fixed/30 blur-3xl pointer-events-none"></div>
+<div class="absolute bottom-20 -right-10 w-44 h-44 rounded-full bg-tertiary-fixed/30 blur-2xl pointer-events-none"></div>
+<!-- Header Bar -->
+<header class="flex items-center justify-between w-full h-16 relative z-10">
+<a aria-label="Go Back" class="w-11 h-11 rounded-full bg-surface-container-lowest flex items-center justify-center text-on-surface shadow-[0_6px_16px_rgba(36,36,58,0.08)] active:translate-y-0.5 transition-transform duration-150" href="index.html">
+<span class="material-symbols-outlined text-[24px]" aria-hidden="true">arrow_back</span>
+</a>
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Settings</h1>
+<!-- Balanced Right Spacer / Decorative Coin Counter Pill -->
+<div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container-lowest shadow-[0_6px_16px_rgba(36,36,58,0.08)]">
+<span class="material-symbols-outlined text-[18px] text-tertiary" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">monetization_on</span>
+<span class="font-counter-numeral text-counter-numeral text-on-surface tabular-nums">1,450</span>
+</div>
+</header>
+<!-- Content Stream -->
+<div class="flex flex-col gap-space-lg mt-space-md relative z-10">
+<!-- Player Quick Profile Banner -->
+<div class="relative overflow-hidden rounded-xl bg-gradient-to-r from-primary-container to-surface-tint p-4 shadow-[0_12px_24px_-6px_rgba(103,89,232,0.35)] text-on-primary">
+<div class="flex items-center gap-3.5 relative z-10">
+<div class="w-14 h-14 rounded-full bg-surface-container-lowest/20 flex items-center justify-center shadow-inner relative">
+<span class="material-symbols-outlined text-[32px] text-on-primary" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">science</span>
+<span class="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-secondary-fixed flex items-center justify-center text-[10px] text-on-secondary-fixed font-black">✓</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm leading-tight text-on-primary">Master Alchemist</span>
+<span class="font-label-md text-label-md text-on-primary-container opacity-90 mt-0.5">Level 42 • 128 Puzzles Solved</span>
+</div>
+</div>
+<!-- Decorative fluid highlight meniscus -->
+<div class="absolute -right-4 -bottom-6 w-24 h-24 rounded-full bg-white/10 blur-sm pointer-events-none"></div>
+</div>
+<!-- Section 1: Audio & Haptics -->
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase px-2 mb-2 tracking-wider">Audio &amp; Feedback</span>
+<div class="flex flex-col rounded-xl bg-surface-container-lowest shadow-[0_8px_20px_-2px_rgba(103,89,232,0.08)] p-3">
+<!-- Row 1: Music -->
+<div class="flex items-center justify-between p-2">
+<div class="flex items-center gap-3.5">
+<div class="w-11 h-11 rounded-2xl bg-primary-fixed flex items-center justify-center text-primary shadow-sm">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">music_note</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">Music</span>
+<span class="font-body-md text-body-md text-on-surface-variant text-xs">Background melodies</span>
+</div>
+</div>
+<!-- Toggle Switch Active -->
+<button aria-checked="true" class="w-14 h-8 rounded-full bg-primary-container p-1 relative flex items-center justify-end shadow-inner active:scale-95 transition-all" role="switch" type="button" aria-label="Music">
+<div class="w-6 h-6 rounded-full bg-surface-container-lowest shadow-md"></div>
+</button>
+</div>
+<div class="h-px w-full bg-surface-container my-1"></div>
+<!-- Row 2: Sound Effects -->
+<div class="flex items-center justify-between p-2">
+<div class="flex items-center gap-3.5">
+<div class="w-11 h-11 rounded-2xl bg-secondary-container flex items-center justify-center text-secondary shadow-sm">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">volume_up</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">Sound Effects</span>
+<span class="font-body-md text-body-md text-on-surface-variant text-xs">Liquid splash &amp; pour</span>
+</div>
+</div>
+<!-- Toggle Switch Active -->
+<button aria-checked="true" class="w-14 h-8 rounded-full bg-primary-container p-1 relative flex items-center justify-end shadow-inner active:scale-95 transition-all" role="switch" type="button" aria-label="Sound Effects">
+<div class="w-6 h-6 rounded-full bg-surface-container-lowest shadow-md"></div>
+</button>
+</div>
+<div class="h-px w-full bg-surface-container my-1"></div>
+<!-- Row 3: Vibration / Haptics -->
+<div class="flex items-center justify-between p-2">
+<div class="flex items-center gap-3.5">
+<div class="w-11 h-11 rounded-2xl bg-tertiary-fixed flex items-center justify-center text-tertiary shadow-sm">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">vibration</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">Haptic Feedback</span>
+<span class="font-body-md text-body-md text-on-surface-variant text-xs">Vibrate on vial pour</span>
+</div>
+</div>
+<!-- Toggle Switch Inactive -->
+<button aria-checked="false" class="w-14 h-8 rounded-full bg-surface-dim p-1 relative flex items-center justify-start shadow-inner active:scale-95 transition-all" role="switch" type="button" aria-label="Haptic Feedback">
+<div class="w-6 h-6 rounded-full bg-surface-container-lowest shadow-md"></div>
+</button>
+</div>
+</div>
+</div>
+<!-- Section 2: Accessibility & Display -->
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase px-2 mb-2 tracking-wider">Accessibility &amp; Visuals</span>
+<div class="flex flex-col rounded-xl bg-surface-container-lowest shadow-[0_8px_20px_-2px_rgba(103,89,232,0.08)] p-3">
+<!-- High Contrast Colorblind Glyphs -->
+<div class="flex items-center justify-between p-2">
+<div class="flex items-center gap-3.5">
+<div class="w-11 h-11 rounded-2xl bg-surface-container-high flex items-center justify-center text-primary shadow-sm">
+<span class="material-symbols-outlined text-[24px]" aria-hidden="true">contrast</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">Color-blind Glyphs</span>
+<span class="font-body-md text-body-md text-on-surface-variant text-xs">Liquid texture patterns</span>
+</div>
+</div>
+<button aria-checked="true" class="w-14 h-8 rounded-full bg-primary-container p-1 relative flex items-center justify-end shadow-inner active:scale-95 transition-all" role="switch" type="button" aria-label="Color-blind Glyphs">
+<div class="w-6 h-6 rounded-full bg-surface-container-lowest shadow-md"></div>
+</button>
+</div>
+</div>
+</div>
+<!-- Section 3: Legal & Support -->
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase px-2 mb-2 tracking-wider">Information</span>
+<div class="flex flex-col rounded-xl bg-surface-container-lowest shadow-[0_8px_20px_-2px_rgba(103,89,232,0.08)] p-3">
+<!-- Row 1: Privacy Policy -->
+<button class="w-full flex items-center justify-between p-2 text-left rounded-lg active:bg-surface-container-low transition-colors" type="button" disabled>
+<div class="flex items-center gap-3.5">
+<div class="w-11 h-11 rounded-2xl bg-surface-container flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined text-[24px]" aria-hidden="true">verified_user</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">Privacy Policy</span>
+<span class="font-body-md text-body-md text-on-surface-variant text-xs">Data protection details</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline text-[22px]" aria-hidden="true">chevron_right</span>
+</button>
+<div class="h-px w-full bg-surface-container my-1"></div>
+<!-- Row 2: About Game -->
+<button class="w-full flex items-center justify-between p-2 text-left rounded-lg active:bg-surface-container-low transition-colors" type="button" disabled>
+<div class="flex items-center gap-3.5">
+<div class="w-11 h-11 rounded-2xl bg-surface-container flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined text-[24px]" aria-hidden="true">info</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">About TintTube</span>
+<span class="font-body-md text-body-md text-on-surface-variant text-xs">Credits &amp; community</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline text-[22px]" aria-hidden="true">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Section 4: Game Progress Action -->
+<div class="pt-1">
+<button class="w-full h-14 rounded-full bg-surface-container-lowest text-error font-label-lg text-label-lg flex items-center justify-center gap-2 shadow-[0_4px_12px_rgba(186,26,26,0.08)] active:translate-y-1 transition-transform" type="button" disabled>
+<span class="material-symbols-outlined text-[20px]" aria-hidden="true">restart_alt</span>
+<span>Reset Puzzle Progress</span>
+</button>
+</div>
+</div>
+<!-- Version Footer -->
+<footer class="mt-8 flex flex-col items-center justify-center text-center gap-1 z-10">
+<div class="flex items-center gap-1.5 opacity-60">
+<span class="material-symbols-outlined text-[16px] text-primary" aria-hidden="true">opacity</span>
+<span class="font-label-md text-label-md text-on-surface-variant font-bold">TintTube v1.0.4</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline tracking-widest uppercase">TintTube Studios • Crafted with Care</span>
+</footer>
+</div>
+</main></body>
+</html>

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html class="h-full" lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Level Complete | TintTube</title>
+<link rel="stylesheet" href="assets/tailwind.css">
+<link rel="stylesheet" href="assets/ui.css">
+<script src="assets/ui.js" defer></script>
+
+</head>
+<body data-screen="level-complete" class="bg-[#121124] min-h-screen h-full text-slate-800 font-nunito flex flex-col relative select-none">
+<!-- Background TintTube Game Scene with rich visuals & gentle blur -->
+<div aria-hidden="true" class="absolute inset-0 flex flex-col justify-between items-center pointer-events-none overflow-hidden scale-105 filter blur-[6px] opacity-75">
+<!-- Laboratory Ambient Lighting Blobs -->
+<div class="absolute -top-20 -left-10 w-80 h-80 bg-purple-600/30 rounded-full blur-3xl"></div>
+<div class="absolute top-1/3 -right-20 w-80 h-80 bg-teal-500/25 rounded-full blur-3xl"></div>
+<div class="absolute -bottom-20 left-10 w-96 h-96 bg-indigo-700/35 rounded-full blur-3xl"></div>
+<!-- Floating Bubbles / Light Particles -->
+<div class="absolute top-24 left-12 w-6 h-6 rounded-full bg-cyan-400/40 blur-[1px]"></div>
+<div class="absolute top-44 right-16 w-8 h-8 rounded-full bg-amber-300/40 blur-[1px]"></div>
+<div class="absolute bottom-40 left-20 w-10 h-10 rounded-full bg-purple-400/30 blur-[2px]"></div>
+<div class="absolute top-1/2 left-8 w-4 h-4 rounded-full bg-pink-400/40"></div>
+<div class="absolute bottom-32 right-12 w-5 h-5 rounded-full bg-teal-300/40"></div>
+<!-- Top Game Bar Behind Blur -->
+<div class="w-full flex items-center justify-between px-6 pt-12 pb-4 max-w-sm">
+<div class="h-10 px-4 rounded-full bg-white/90 shadow-md flex items-center gap-2">
+<span class="material-symbols-outlined text-indigo-600 text-xl" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">water_drop</span>
+<span class="font-extrabold text-sm tracking-wide text-slate-800">LEVEL 12</span>
+</div>
+<div class="h-10 px-4 rounded-full bg-white/90 shadow-md flex items-center gap-2">
+<div class="w-5 h-5 rounded-full bg-amber-400 flex items-center justify-center text-amber-900 font-black text-xs shadow-inner">🪙</div>
+<span class="font-black text-sm text-slate-800">1,250</span>
+</div>
+</div>
+<!-- Glass Tubes Array -->
+<div class="grid grid-cols-4 gap-4 px-6 my-auto max-w-sm justify-items-center">
+<!-- Tube 1 (Cyan/Teal Solved) -->
+<div class="w-14 h-52 rounded-b-3xl rounded-t-xl bg-white/35 backdrop-blur-md p-1 border-2 border-white/60 flex flex-col justify-end gap-1 shadow-lg">
+<div class="h-11 rounded-lg bg-teal-400 shadow-inner"></div>
+<div class="h-11 rounded-lg bg-teal-400 shadow-inner"></div>
+<div class="h-11 rounded-lg bg-teal-400 shadow-inner"></div>
+<div class="h-11 rounded-b-2xl rounded-t-lg bg-teal-400 shadow-inner"></div>
+</div>
+<!-- Tube 2 (Purple Solved) -->
+<div class="w-14 h-52 rounded-b-3xl rounded-t-xl bg-white/35 backdrop-blur-md p-1 border-2 border-white/60 flex flex-col justify-end gap-1 shadow-lg">
+<div class="h-11 rounded-lg bg-indigo-500 shadow-inner"></div>
+<div class="h-11 rounded-lg bg-indigo-500 shadow-inner"></div>
+<div class="h-11 rounded-lg bg-indigo-500 shadow-inner"></div>
+<div class="h-11 rounded-b-2xl rounded-t-lg bg-indigo-500 shadow-inner"></div>
+</div>
+<!-- Tube 3 (Amber Solved) -->
+<div class="w-14 h-52 rounded-b-3xl rounded-t-xl bg-white/35 backdrop-blur-md p-1 border-2 border-white/60 flex flex-col justify-end gap-1 shadow-lg">
+<div class="h-11 rounded-lg bg-amber-500 shadow-inner"></div>
+<div class="h-11 rounded-lg bg-amber-500 shadow-inner"></div>
+<div class="h-11 rounded-lg bg-amber-500 shadow-inner"></div>
+<div class="h-11 rounded-b-2xl rounded-t-lg bg-amber-500 shadow-inner"></div>
+</div>
+<!-- Tube 4 (Empty Tube) -->
+<div class="w-14 h-52 rounded-b-3xl rounded-t-xl bg-white/20 backdrop-blur-md p-1 border-2 border-white/50 flex flex-col justify-end shadow-md">
+</div>
+</div>
+<!-- Lower Game Control Dock -->
+<div class="flex items-center justify-center gap-4 pb-12">
+<div class="w-12 h-12 rounded-2xl bg-white/80 shadow-md flex items-center justify-center text-slate-600">
+<span class="material-symbols-outlined" aria-hidden="true">undo</span>
+</div>
+<div class="w-12 h-12 rounded-2xl bg-white/80 shadow-md flex items-center justify-center text-slate-600">
+<span class="material-symbols-outlined" aria-hidden="true">add_circle</span>
+</div>
+<div class="w-12 h-12 rounded-2xl bg-white/80 shadow-md flex items-center justify-center text-slate-600">
+<span class="material-symbols-outlined" aria-hidden="true">shuffle</span>
+</div>
+<div class="w-12 h-12 rounded-2xl bg-white/80 shadow-md flex items-center justify-center text-slate-600">
+<span class="material-symbols-outlined" aria-hidden="true">lightbulb</span>
+</div>
+</div>
+</div>
+<!-- Fullscreen Modal Backdrop Overlay -->
+<main class="relative z-10 w-full h-full min-h-screen flex flex-col justify-center items-center px-5 pt-safe pb-safe bg-[#1a153b]/65 backdrop-blur-lg">
+<!-- Modal Outer Wrapper with Confetti Elements -->
+<div class="relative w-full max-w-sm flex flex-col items-center">
+<!-- Ambient Glow Behind Modal Card -->
+<div class="absolute -inset-2 bg-gradient-to-t from-indigo-500/25 via-teal-400/20 to-amber-300/30 rounded-3xl blur-2xl pointer-events-none"></div>
+<!-- Festive Confetti Sprinkles & Sparkles -->
+<!-- Left Confetti Star -->
+<div class="absolute -top-10 left-2 w-8 h-8 rotate-12 text-amber-400 opacity-95 pointer-events-none drop-shadow-md">
+<svg class="w-full h-full" fill="currentColor" viewbox="0 0 24 24">
+<path d="M12 2l2.4 7.2h7.6l-6 4.8 2.4 7.2-6.4-4.6-6.4 4.6 2.4-7.2-6-4.8h7.6z"></path>
+</svg>
+</div>
+<!-- Right Confetti Diamond -->
+<div class="absolute -top-6 right-3 w-6 h-6 -rotate-45 text-[#52C8C2] opacity-95 pointer-events-none drop-shadow">
+<svg class="w-full h-full" fill="currentColor" viewbox="0 0 24 24">
+<rect height="16" rx="4" transform="rotate(45 12 12)" width="16"></rect>
+</svg>
+</div>
+<!-- Top Center Confetti Bits -->
+<div class="absolute -top-11 right-16 w-5 h-7 bg-indigo-500 rounded-sm rotate-45 opacity-90 pointer-events-none"></div>
+<div class="absolute -top-5 left-16 w-3 h-3 rounded-full bg-rose-500 opacity-90 pointer-events-none"></div>
+<div class="absolute top-2 -left-3 w-4 h-6 bg-amber-300 rounded-sm -rotate-12 opacity-90 pointer-events-none"></div>
+<div class="absolute top-10 -right-2 w-3.5 h-3.5 rounded-full bg-teal-400 opacity-80 pointer-events-none"></div>
+<!-- Celebratory Modal Card Surface -->
+<div class="w-full bg-[#ffffff] rounded-3xl shadow-2xl p-6 pt-11 border border-white/80 flex flex-col items-center relative overflow-visible">
+<!-- Arched Rating Stars Crown (Center Elevated, Radiant Gold & Soft Unfilled) -->
+<div class="absolute -top-12 inset-x-0 flex items-center justify-center gap-3 pointer-events-none z-20">
+<!-- Star 1 (Left - Earned) -->
+<div class="transform -rotate-12 translate-y-2 flex items-center justify-center drop-shadow-md">
+<div class="w-14 h-14 rounded-2xl bg-gradient-to-b from-[#F4B942] to-[#E59F1C] flex items-center justify-center shadow-lg border-2 border-white/60">
+<span class="material-symbols-outlined text-white text-3xl" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+</div>
+</div>
+<!-- Star 2 (Centerpiece - Earned, Enlarged & Glowing) -->
+<div class="relative transform scale-110 -translate-y-2 flex items-center justify-center drop-shadow-xl">
+<div class="w-16 h-16 rounded-2xl bg-gradient-to-b from-[#FFD363] via-[#F4B942] to-[#E59F1C] flex items-center justify-center shadow-2xl border-2 border-white/80">
+<span class="material-symbols-outlined text-white text-4xl" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">star</span>
+</div>
+<!-- Star sparkle highlight badge -->
+<div class="absolute -top-2 -right-2 text-amber-300">
+<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">auto_awesome</span>
+</div>
+</div>
+<!-- Star 3 (Right - Unearned / Soft Gray) -->
+<div class="transform rotate-12 translate-y-2 flex items-center justify-center drop-shadow-sm">
+<div class="w-14 h-14 rounded-2xl bg-[#E2E8F0] flex items-center justify-center border-2 border-white/60">
+<span class="material-symbols-outlined text-slate-400 text-3xl" aria-hidden="true">star</span>
+</div>
+</div>
+</div>
+<!-- Level Cleared Badge -->
+<div class="mt-2 mb-1.5 px-3 py-1 rounded-full bg-[#EDE9FE] flex items-center gap-1.5 shadow-sm">
+<span class="w-2 h-2 rounded-full bg-[#6759E8]"></span>
+<span class="text-[11px] font-extrabold text-[#5546D4] uppercase tracking-wider">Level 12 Cleared</span>
+</div>
+<!-- Title & Subtitle -->
+<h2 class="text-2xl font-black text-slate-900 text-center tracking-tight mb-1">
+          Level Complete!
+        </h2>
+<p class="text-xs font-semibold text-slate-500 text-center mb-4">
+          Spectacular pouring! Perfect harmony.
+        </p>
+<!-- Stats Container (Light Clean Bento Box) -->
+<div class="w-full bg-[#F8FAFC] rounded-2xl p-3.5 mb-5 space-y-2.5 border border-slate-100">
+<!-- Moves Used Row -->
+<div class="w-full bg-white rounded-xl p-3 flex items-center justify-between shadow-sm border border-slate-100/70">
+<div class="flex items-center gap-2.5">
+<div class="w-9 h-9 rounded-xl bg-teal-50 flex items-center justify-center text-[#149B95]">
+<span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">touch_app</span>
+</div>
+<div class="flex flex-col text-left">
+<span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Total Moves</span>
+<span class="text-xs font-bold text-slate-700">Precision pour</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-xl font-black text-slate-800">14</span>
+<span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-teal-100 text-[#006F6B]">
+                Great!
+              </span>
+</div>
+</div>
+<!-- Coins Earned Row -->
+<div class="w-full bg-white rounded-xl p-3 flex items-center justify-between shadow-sm border border-slate-100/70">
+<div class="flex items-center gap-2.5">
+<div class="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center text-amber-500">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">monetization_on</span>
+</div>
+<div class="flex flex-col text-left">
+<span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Coins Reward</span>
+<span class="text-[11px] font-semibold text-slate-400">Bank: 1,280</span>
+</div>
+</div>
+<div class="px-3 py-1 rounded-full bg-amber-100/80 flex items-center gap-1">
+<span class="text-sm font-black text-amber-800">+30</span>
+<span class="material-symbols-outlined text-sm text-amber-800" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">savings</span>
+</div>
+</div>
+</div>
+<!-- Action CTAs -->
+<div class="w-full flex flex-col gap-2.5">
+<!-- Primary Hero Button: NEXT LEVEL -->
+<a class="w-full py-4 bg-[#6759E8] text-white rounded-2xl flex items-center justify-center gap-2 font-black text-sm tracking-wider uppercase shadow-lg shadow-indigo-500/30 hover:brightness-105 active:scale-98 transition-all cursor-pointer" href="levels.html">
+<span>Next Level</span>
+<span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">arrow_forward</span>
+</a>
+<!-- Secondary Actions Dock: Replay & Home Side-by-Side -->
+<div class="w-full flex items-center gap-2.5">
+<!-- Replay Button -->
+<a class="flex-1 py-3 bg-white border-2 border-[#52C8C2] rounded-2xl flex items-center justify-center gap-1.5 text-[#149B95] font-extrabold text-xs uppercase tracking-wider shadow-sm hover:bg-teal-50/50 active:scale-98 transition-all cursor-pointer" href="gameplay.html">
+<span class="material-symbols-outlined text-base font-bold" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">replay</span>
+<span>Replay</span>
+</a>
+<!-- Home Button -->
+<a class="flex-1 py-3 bg-white border border-slate-200 rounded-2xl flex items-center justify-center gap-1.5 text-slate-600 font-extrabold text-xs uppercase tracking-wider shadow-sm hover:bg-slate-50 active:scale-98 transition-all cursor-pointer" href="index.html">
+<span class="material-symbols-outlined text-base" aria-hidden="true">home</span>
+<span>Home</span>
+</a>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body>
+</html>
