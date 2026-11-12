@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/gameplay/game_board.gd" id="1"]
 [ext_resource type="Theme" path="res://assets/theme/tinttube.tres" id="2"]
@@ -6,6 +6,8 @@
 [ext_resource type="Script" path="res://scripts/ui/pour_stream.gd" id="4"]
 [ext_resource type="Script" path="res://scripts/services/audio_manager.gd" id="5"]
 [ext_resource type="PackedScene" path="res://scenes/level_select/level_select.tscn" id="6"]
+[ext_resource type="Script" path="res://scripts/ui/game_menu.gd" id="7"]
+[ext_resource type="Script" path="res://scripts/ui/star_rating.gd" id="8"]
 
 [sub_resource type="Gradient" id="BackgroundGradient"]
 colors = PackedColorArray(0.97, 0.972, 1, 1, 0.92, 0.906, 0.99, 1)
@@ -66,7 +68,14 @@ horizontal_alignment = 1
 [node name="Header" type="HBoxContainer" parent="SafeArea/Content"]
 layout_mode = 2
 alignment = 1
-theme_override_constants/separation = 14
+theme_override_constants/separation = 8
+
+[node name="Home" type="Button" parent="SafeArea/Content/Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_type_variation = &"SecondaryButton"
+text = "Home"
 
 [node name="Levels" type="Button" parent="SafeArea/Content/Header"]
 unique_name_in_owner = true
@@ -84,6 +93,13 @@ theme_override_font_sizes/font_size = 16
 [node name="Moves" type="Label" parent="SafeArea/Content"]
 unique_name_in_owner = true
 layout_mode = 2
+horizontal_alignment = 1
+
+[node name="Wallet" type="Label" parent="SafeArea/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.53, 0.32, 0.14, 1)
+theme_override_font_sizes/font_size = 16
 horizontal_alignment = 1
 
 [node name="PlayArea" type="CenterContainer" parent="SafeArea/Content"]
@@ -133,6 +149,13 @@ layout_mode = 2
 mouse_default_cursor_shape = 2
 text = "Restart"
 
+[node name="Hint" type="Button" parent="SafeArea/Content/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+text = "Hint"
+
 [node name="Victory" type="PanelContainer" parent="SafeArea/Content"]
 unique_name_in_owner = true
 visible = false
@@ -151,17 +174,47 @@ theme_override_colors/font_color = Color(0.06, 0.39, 0.24, 1)
 theme_override_font_sizes/font_size = 22
 horizontal_alignment = 1
 
-[node name="NextLevel" type="Button" parent="SafeArea/Content/Victory/VictoryContent"]
+[node name="Stars" type="Control" parent="SafeArea/Content/Victory/VictoryContent"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(120, 35)
+layout_mode = 2
+script = ExtResource("8")
+
+[node name="Reward" type="Label" parent="SafeArea/Content/Victory/VictoryContent"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+horizontal_alignment = 1
+
+[node name="VictoryActions" type="HBoxContainer" parent="SafeArea/Content/Victory/VictoryContent"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 10
+
+[node name="NextLevel" type="Button" parent="SafeArea/Content/Victory/VictoryContent/VictoryActions"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(164, 48)
 layout_mode = 2
 mouse_default_cursor_shape = 2
 text = "Next Level"
 
+[node name="Replay" type="Button" parent="SafeArea/Content/Victory/VictoryContent/VictoryActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+theme_type_variation = &"SecondaryButton"
+text = "Replay"
+
 [node name="LevelSelect" parent="SafeArea" instance=ExtResource("6")]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
+
+[node name="GameMenu" type="VBoxContainer" parent="SafeArea"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+script = ExtResource("7")
 
 [node name="PourAnimation" type="Control" parent="."]
 unique_name_in_owner = true

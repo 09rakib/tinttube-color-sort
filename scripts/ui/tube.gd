@@ -24,6 +24,8 @@ var _styles := {}
 var _surface_phase := 0.0
 var _surface_clock := 0.0
 var _phase_offset := 0.0
+var _rim_color := Color("#85c6cf")
+var _hint_color := Color.TRANSPARENT
 
 
 func _ready() -> void:
@@ -60,6 +62,16 @@ func show_tube(index: int, layers: Array, capacity: int, selected: bool) -> void
 
 static func liquid_tint(color: int) -> Color:
 	return LIQUIDS[color % LIQUIDS.size()]
+
+
+func set_rim_color(color: Color) -> void:
+	_rim_color = color
+	queue_redraw()
+
+
+func set_hint_color(color: Color) -> void:
+	_hint_color = color
+	queue_redraw()
 
 
 func mouth_position() -> Vector2:
@@ -160,19 +172,21 @@ func _draw_glass_body(body: Rect2) -> void:
 		outline.append(center + Vector2(cos(angle), sin(angle)) * radius)
 	draw_colored_polygon(outline, Color("#cbe8f338"))
 	outline.append(outline[0])
+	if _hint_color.a > 0.0:
+		draw_polyline(outline, _hint_color, 8.0, true)
 	draw_polyline(outline, Color("#8170e6") if _selected else Color("#86aac490"), 3.4, true)
 	draw_polyline(outline, Color("#fffffff0"), 1.7, true)
 
 
 func _draw_glass_rim(radius: float) -> void:
 	# The lower lip and the recessed opening give the rim visible thickness.
-	draw_rect(Rect2(-radius, 0, radius * 2.0, 5.0), Color("#85c6cf"))
-	_draw_rim_ellipse(Vector2(0, 5), Vector2(radius, 7), Color("#b7edf0"), Color("#6eb4c3"),
+	draw_rect(Rect2(-radius, 0, radius * 2.0, 5.0), _rim_color)
+	_draw_rim_ellipse(Vector2(0, 5), Vector2(radius, 7), _rim_color.lightened(0.35), _rim_color.darkened(0.11),
 		Color("#f6ffff"))
-	_draw_rim_ellipse(Vector2.ZERO, Vector2(radius, 7), Color("#f1ffff"), Color("#a2dde4"),
+	_draw_rim_ellipse(Vector2.ZERO, Vector2(radius, 7), Color("#f1ffff"), _rim_color.lightened(0.29),
 		Color("#ffffff"))
 	_draw_rim_ellipse(Vector2(0, 0.1), Vector2(radius - 3.5, 4.8),
-		Color("#6da8ba"), Color("#bdebf0"), Color("#e6ffff"))
+		_rim_color.darkened(0.18), _rim_color.lightened(0.40), Color("#e6ffff"))
 
 
 func _draw_rim_ellipse(center: Vector2, radii: Vector2, upper: Color, lower: Color, edge: Color) -> void:

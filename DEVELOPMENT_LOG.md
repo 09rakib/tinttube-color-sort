@@ -1,5 +1,13 @@
 # TintTube development log
 
+## Milestone 4 · UI and Rewards
+
+Added Home, Settings, and Shop to the native game. The shop equips themes and glass rims. Music, sound effects, and Android vibration have separate saved preferences.
+
+The wallet earns coins on the first clear and on the first three-star result for each level. Older saves receive the starting wallet and the base reward for previously completed levels. Hint search runs in batches between frames and charges only after confirmation and a valid result.
+
+The Godot suite passed 2,928 checks, including older save migration, replay rewards, shop persistence, failed purchases, and accepted hints. Home, Shop, Settings, and gameplay were checked in the Windows renderer at 390 × 820 and 320 × 600. Android vibration still needs on-device verification.
+
 ## Liquid rendering update
 
 Removed symbols from the liquid and replaced the solid fills with a lighter palette, gradients, and gently moving surfaces. Matching layers render as a single body of water. Glass reflections, stream highlights, and a small splash reinforce the effect during a pour.

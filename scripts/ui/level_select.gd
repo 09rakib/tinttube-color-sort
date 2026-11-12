@@ -5,6 +5,7 @@ signal level_selected(level: int)
 signal back_requested
 
 const Progress = preload("res://scripts/services/player_progress.gd")
+const Rewards = preload("res://scripts/services/rewards.gd")
 const COLUMNS := 5
 
 @onready var _scroll: ScrollContainer = %Scroll
@@ -14,6 +15,7 @@ const COLUMNS := 5
 @onready var _back: Button = %Back
 
 var _buttons: Array[Button] = []
+var _pars: Array[int] = []
 var _completed_style: StyleBoxFlat
 
 
@@ -50,6 +52,7 @@ func build(levels: Array[Dictionary]) -> void:
 		tile.pressed.connect(level_selected.emit.bind(int(level.id)))
 		grid.add_child(tile)
 		_buttons.append(tile)
+		_pars.append(level.par_moves)
 
 
 func show_progress(progress: Progress, active_level: int) -> void:
@@ -67,8 +70,9 @@ func show_progress(progress: Progress, active_level: int) -> void:
 			description = "Locked"
 			tile.text += "\n—"
 		elif best > 0:
-			description = "Completed in %d moves" % best
-			tile.text += "\n✓"
+			var stars := Rewards.stars(best, _pars[index])
+			description = "Completed in %d moves · %d stars" % [best, stars]
+			tile.text += "\n%d/3" % stars
 			tile.add_theme_stylebox_override("normal", _completed_style)
 		elif level == active_level:
 			description = "Current level"

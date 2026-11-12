@@ -20,15 +20,18 @@
 - [x] Build native level selection and sequential unlocking.
 - [x] Implement versioned local saves for completion, best moves, and the current level.
 
-## Next milestone — UI and Rewards
+## Milestone 4 — UI and Rewards
 
-- [ ] Build the native Home, Settings, and Shop screens.
-- [ ] Implement coins and star ratings.
-- [ ] Connect hints to the solver and coin balance.
+- [x] Build the native Home, Settings, and Shop screens.
+- [x] Implement coins and star ratings.
+- [x] Connect hints to the solver and coin balance.
+
+## Next milestone — Daily Challenges and Accessibility
+
+- [ ] Add verified generation, daily challenges, achievements, accessibility improvements, and performance measurements.
 
 ## Later milestones
 
-- [ ] 5 · Add verified generation, daily challenges, achievements, accessibility improvements, and performance measurements.
 - [ ] 6 · Integrate and test supported ads, prepare the billing interface, and run device regression tests.
 - [ ] 7 · Configure release export, verify Play Console requirements, and prepare the signed Android release.
 

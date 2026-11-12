@@ -23,6 +23,7 @@ func _run() -> void:
 	var folder := "user://tinttube-test-%d-%d" % [OS.get_process_id(), Time.get_ticks_usec()]
 	_check(DirAccess.make_dir_absolute(folder) == OK, "Create an isolated save directory")
 	_test_progress(folder + "/unit")
+	_test_economy(folder + "/economy")
 	await _test_gameplay_scene(folder + "/scene")
 	for file in DirAccess.get_files_at(folder):
 		DirAccess.remove_absolute(folder + "/" + file)
@@ -141,7 +142,7 @@ func _test_progress(path: String) -> void:
 	reloaded = Progress.new(50, path)
 	_check(reloaded.current_level == 2 and reloaded.best_moves(1) == 6,
 		"Loading falls back to the last valid slot")
-	var newer := '{"version":2,"revision":4}'
+	var newer := '{"version":3,"revision":4}'
 	_write_text(slot_a, newer)
 	reloaded = Progress.new(50, path)
 	reloaded.record_win(2, 4)
@@ -178,6 +179,28 @@ func _write_text(path: String, contents: String) -> void:
 	var file := FileAccess.open(path, FileAccess.WRITE)
 	if file != null:
 		file.store_string(contents)
+
+
+func _test_economy(path: String) -> void:
+	_write_text(path + ".0.json", '{"version":1,"revision":1,"current_level":2,"best_moves":[6]}')
+	var progress := Progress.new(50, path)
+	_check(progress.coins == 120 and progress.current_level == 2 and progress.best_moves(1) == 6,
+		"Version 1 progress and completions migrate to the wallet")
+	_check(progress.record_win(1, 3, 3) == 10, "A replay awards a newly earned perfect bonus")
+	_check(progress.record_win(1, 3, 3) == 0, "A replay cannot award the same bonus twice")
+	_check(progress.record_win(2, 4, 4) == 30, "A first perfect clear awards base coins and the bonus")
+	_check(progress.buy_or_equip("rose") and progress.coins == 100, "Buying a rim deducts its price once")
+	_check(progress.buy_or_equip("aqua") and progress.buy_or_equip("rose") and progress.coins == 100,
+		"Equipping an owned rim is free")
+	_check(progress.buy_hint() and progress.coins == 50 and not progress.buy_or_equip("seafoam"),
+		"Unaffordable cosmetics leave the wallet intact")
+	progress.set_setting("effects", false)
+	var reloaded := Progress.new(50, path)
+	_check(reloaded.coins == 50 and reloaded.rim_id == "rose" and reloaded.owns("rose")
+		and not reloaded.settings.effects and reloaded.best_moves(2) == 4,
+		"Wallet, preferences, cosmetics and progress survive reload")
+	var failed := Progress.new(50, path + "-missing/subfolder")
+	_check(not failed.buy_hint() and failed.coins == 100, "A failed save does not charge for a hint")
 
 
 func _test_gameplay_scene(path: String) -> void:
@@ -221,6 +244,17 @@ func _test_gameplay_scene(path: String) -> void:
 	var first := first_row.get_child(0) as Button
 	var second := first_row.get_child(1) as Button
 	var third := first_row.get_child(2) as Button
+	var hint := board.get_node("%Hint") as Button
+	_click(hint)
+	var prompt := board.get("_hint_dialog") as ConfirmationDialog
+	var progress = board.get("_progress")
+	_check(prompt.visible and progress.coins == 100, "Opening the confirmation leaves the wallet untouched")
+	prompt.hide()
+	prompt.confirmed.emit()
+	await process_frame
+	await process_frame
+	_check(progress.coins == 50 and hint.disabled and status.text == "Pour from tube 1 into tube 3.",
+		"An accepted hint charges once and points to a legal move")
 
 	_click(third)
 	_check(status.text.begins_with("Choose a tube"), "An empty tap does not select a source")
