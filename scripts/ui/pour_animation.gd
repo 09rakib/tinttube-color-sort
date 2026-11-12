@@ -1,7 +1,8 @@
 extends Control
 ## Owns the temporary poses and stream for one committed move.
 
-signal stream_started
+signal stream_started(duration: float)
+signal stream_ended
 signal finished
 
 const TubeView = preload("res://scripts/ui/tube.gd")
@@ -40,9 +41,9 @@ func animate(source: TubeView, destination: TubeView, amount: int, color: int) -
 	_tween = create_tween()
 	_tween.tween_method(_move_tube.bind(start, tipped), 0.0, 1.0, 0.20) \
 		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
-	_tween.tween_callback(func() -> void: stream_started.emit())
-	_tween.tween_method(_draw_transfer.bind(amount, color), 0.0, 1.0, 0.26 + 0.04 * amount)
-	_tween.tween_callback(_stream.hide)
+	var stream_duration := 0.26 + 0.04 * amount
+	_tween.tween_method(_draw_transfer.bind(amount, color, stream_duration), 0.0, 1.0, stream_duration)
+	_tween.tween_callback(_end_stream)
 	_tween.tween_method(_move_tube.bind(tipped, rest), 0.0, 1.0, 0.20) \
 		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
 	_tween.finished.connect(settle)
@@ -58,7 +59,7 @@ func settle() -> void:
 	_destination.reset_effects()
 	_source = null
 	_destination = null
-	_stream.hide()
+	_end_stream()
 	finished.emit()
 
 
@@ -67,12 +68,21 @@ func _move_tube(weight: float, start: Vector4, finish: Vector4) -> void:
 	_source.set_pose(Vector2(pose.x, pose.y), pose.z, pose.w)
 
 
-func _draw_transfer(progress: float, amount: int, color: int) -> void:
+func _draw_transfer(progress: float, amount: int, color: int, duration: float) -> void:
+	var starting := not _stream.visible
 	var moved := amount * clampf((progress - 0.06) / 0.88, 0.0, 1.0)
 	_source.preview_liquid(-moved, color)
 	_destination.preview_liquid(moved, color)
 	_stream.show_stream(to_local_point(_source.mouth_position()),
 		to_local_point(_destination.mouth_position()), TubeView.liquid_tint(color), progress)
+	if starting:
+		stream_started.emit(duration)
+
+
+func _end_stream() -> void:
+	if _stream.visible:
+		_stream.hide()
+		stream_ended.emit()
 
 
 func to_local_point(global_point: Vector2) -> Vector2:

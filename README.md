@@ -12,7 +12,7 @@ Levels are stored bottom-to-top in `data/levels/core_levels.json` with their sho
 
 Progress saves automatically when you complete or change levels. The game resumes the last selected level from its starting board and keeps completions, unlocked levels, and best move counts. It stores versioned progress in alternating `user://tinttube-progress.*.json` files and falls back to the previous valid save if the latest one is damaged.
 
-The selected tube lifts, legal pours animate the transfer, and invalid targets shake. Board controls become available again when the pour finishes. A resize or application pause settles the active move and restores the tube positions. The five bundled sound effects are original, synthesized WAV files.
+The selected tube lifts, legal pours animate the transfer, and invalid targets shake. Board controls become available again when the pour finishes. A resize or application pause settles the active move and restores the tube positions. The pour cue blends TintTube's original sound with an edited excerpt of [Pouring liquid in a cup by OxidVideos](https://pixabay.com/sound-effects/film-special-effects-pouring-liquid-in-a-cup-386762/). The remaining cues are original, synthesized WAV files.
 
 ## Verify the native build locally
 

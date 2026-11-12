@@ -42,7 +42,8 @@ var _victory_tween: Tween
 func _ready() -> void:
 	resized.connect(_pour.settle)
 	_pour.finished.connect(_finish_pour)
-	_pour.stream_started.connect(func() -> void: _audio.play_effect(AudioManager.Effect.POUR))
+	_pour.stream_started.connect(_audio.play_pour)
+	_pour.stream_ended.connect(_audio.stop_pour)
 	if OS.has_feature("mobile"):
 		resized.connect(_update_safe_area)
 		_update_safe_area()

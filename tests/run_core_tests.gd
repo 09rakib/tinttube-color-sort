@@ -250,13 +250,17 @@ func _test_gameplay_scene(path: String) -> void:
 	while animation.is_active() and not stream.visible and Time.get_ticks_msec() < stream_deadline:
 		await process_frame
 	_check(stream.visible and not is_zero_approx(float(first.get("pose_angle"))), "Tipped tube shows the stream")
-	_check((audio.get_child(AudioManager.Effect.POUR) as AudioStreamPlayer).playing,
-		"Stream starts the pouring cue")
+	var pour_sound := audio.get_child(AudioManager.Effect.POUR) as AudioStreamPlayer
+	_check(pour_sound.playing and is_equal_approx(pour_sound.stream.get_length() / pour_sound.pitch_scale, 0.30),
+		"Stream starts the pouring cue at the duration of a single-layer transfer")
 	await create_timer(0.12).timeout
 	var drained := float(first.get("_liquid_delta"))
 	var received := float(third.get("_liquid_delta"))
 	_check(drained < 0.0 and received < 1.0 and is_equal_approx(received, -drained),
 		"During the stream, the source and destination show the same fractional transfer")
+	while stream.visible and Time.get_ticks_msec() < stream_deadline:
+		await process_frame
+	_check(not stream.visible and not pour_sound.playing, "The pouring cue stops with the stream")
 	await _wait_for_pour(animation)
 	_check(moves.text == "Moves: 1" and not stream.visible and not first.disabled,
 		"Exactly one move is reflected after the animation")
@@ -267,9 +271,14 @@ func _test_gameplay_scene(path: String) -> void:
 
 	_click(first)
 	_click(third)
+	var pause_deadline := Time.get_ticks_msec() + 2000
+	while not stream.visible and animation.is_active() and Time.get_ticks_msec() < pause_deadline:
+		await process_frame
+	_check(pour_sound.playing, "The pouring cue is active before interruption")
 	board.notification(Node.NOTIFICATION_APPLICATION_PAUSED)
 	_check(moves.text == "Moves: 1" and not animation.is_active() and not stream.visible
 		and not first.disabled, "Backgrounding settles the committed move exactly once")
+	_check(not pour_sound.playing, "Backgrounding stops the interrupted pouring cue")
 	_check(first.get("pose_offset") == Vector2.ZERO and first.get("pose_angle") == 0.0,
 		"Interrupted animation resets the source pose")
 	_click(restart)

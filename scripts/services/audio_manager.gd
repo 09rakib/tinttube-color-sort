@@ -1,5 +1,5 @@
 extends Node
-## Plays the original, locally bundled gameplay sound effects.
+## Plays the locally bundled gameplay sound effects.
 
 enum Effect { BUTTON, SELECT, INVALID, POUR, COMPLETE }
 
@@ -27,6 +27,16 @@ func play_effect(effect: Effect) -> void:
 	var player := _players[effect]
 	if not player.playing:
 		player.play()
+
+
+func play_pour(duration: float) -> void:
+	var player := _players[Effect.POUR]
+	player.pitch_scale = player.stream.get_length() / duration
+	player.play()
+
+
+func stop_pour() -> void:
+	_players[Effect.POUR].stop()
 
 
 func stop_effects() -> void:
