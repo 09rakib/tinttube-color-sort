@@ -8,6 +8,8 @@ const LIQUIDS := [
 const COLOR_NAMES := ["lavender", "mint", "coral", "amber", "blue", "pink"]
 const LIFT := Vector2(0, -9)
 const SURFACE_STEPS := 12
+const GLASS_WIDTH := 48.0
+const HEADSPACE := 22.0
 
 var pose_offset := Vector2.ZERO
 var pose_angle := 0.0
@@ -126,36 +128,76 @@ func _mouth() -> Vector2:
 func _draw() -> void:
 	var pivot := _mouth()
 	draw_set_transform(pivot + pose_offset, pose_angle, Vector2.ONE * pose_scale)
-	var body := Rect2(Vector2(9, 13) - pivot, size - Vector2(18, 20))
-	var well := body.grow(-5)
+	var body := Rect2(-GLASS_WIDTH / 2.0, 0.0, GLASS_WIDTH, size.y - pivot.y - 7.0)
+	var well := body.grow(-3.0)
+	well.position.y += HEADSPACE
+	well.size.y -= HEADSPACE
 	var liquid_height := clampf(_layers.size() + _liquid_delta, 0.0, _capacity)
 
-	_draw_round_rect(Rect2(body.position.x, body.end.y - 8, body.size.x, 13),
-		Color("#665a9f19"), 10)
-	_draw_round_rect(body, Color("#faffffac"), 20, 20, 2,
-		Color("#8170e6") if _selected else Color("#ffffffed"))
+	_draw_round_rect(Rect2(body.position.x + 2, body.end.y - 6, body.size.x - 4, 13),
+		Color("#536c8c21"), 9)
+	_draw_glass_body(body)
 	_draw_liquid(well, liquid_height)
 
-	# Long reflections run down the glass wall, independent of the liquid level.
-	var glint := Rect2(body.position + Vector2(5, 10), Vector2(4, body.size.y * 0.69))
-	_draw_round_rect(glint, Color("#ffffff74"), 2)
-	var edge := Rect2(body.end.x - 7, body.position.y + 13, 2, body.size.y * 0.60)
-	_draw_round_rect(edge, Color("#ffffff56"), 1)
+	# Reflections sit on the glass wall, so they also show in the empty headspace.
+	var glint := Rect2(body.position + Vector2(5, 9), Vector2(4, body.size.y * 0.82))
+	_draw_round_rect(glint, Color("#ffffff92"), 2)
+	var inner_glint := Rect2(body.position + Vector2(11, 15), Vector2(2, body.size.y * 0.65))
+	_draw_round_rect(inner_glint, Color("#ffffff56"), 1)
+	var far_edge := Rect2(body.end.x - 6, 10, 2, body.size.y * 0.73)
+	_draw_round_rect(far_edge, Color("#ffffff8a"), 1)
 
-	var rim := Rect2(body.position - Vector2(3, 4), Vector2(body.size.x + 6, 9))
-	_draw_round_rect(rim, Color("#ffffffed"), 5, 5, 1, Color("#dcd6f1"))
-	_draw_round_rect(rim.grow_individual(-5, -2, -5, -3), Color("#dcd8ec85"), 3)
+	_draw_glass_rim(body.size.x / 2.0 + 4.0)
+
+
+func _draw_glass_body(body: Rect2) -> void:
+	const BASE_STEPS := 24
+	var radius := body.size.x / 2.0
+	var center := Vector2(body.get_center().x, body.end.y - radius)
+	var outline := PackedVector2Array([body.position, Vector2(body.end.x, body.position.y)])
+	for index in range(BASE_STEPS + 1):
+		var angle := PI * index / BASE_STEPS
+		outline.append(center + Vector2(cos(angle), sin(angle)) * radius)
+	draw_colored_polygon(outline, Color("#cbe8f338"))
+	outline.append(outline[0])
+	draw_polyline(outline, Color("#8170e6") if _selected else Color("#86aac490"), 3.4, true)
+	draw_polyline(outline, Color("#fffffff0"), 1.7, true)
+
+
+func _draw_glass_rim(radius: float) -> void:
+	# The lower lip and the recessed opening give the rim visible thickness.
+	draw_rect(Rect2(-radius, 0, radius * 2.0, 5.0), Color("#85c6cf"))
+	_draw_rim_ellipse(Vector2(0, 5), Vector2(radius, 7), Color("#b7edf0"), Color("#6eb4c3"),
+		Color("#f6ffff"))
+	_draw_rim_ellipse(Vector2.ZERO, Vector2(radius, 7), Color("#f1ffff"), Color("#a2dde4"),
+		Color("#ffffff"))
+	_draw_rim_ellipse(Vector2(0, 0.1), Vector2(radius - 3.5, 4.8),
+		Color("#6da8ba"), Color("#bdebf0"), Color("#e6ffff"))
+
+
+func _draw_rim_ellipse(center: Vector2, radii: Vector2, upper: Color, lower: Color, edge: Color) -> void:
+	const STEPS := 28
+	var outline := PackedVector2Array()
+	var colors := PackedColorArray()
+	for index in range(STEPS):
+		var angle := TAU * index / STEPS
+		var unit := Vector2(cos(angle), sin(angle))
+		outline.append(center + unit * radii)
+		colors.append(upper.lerp(lower, (unit.y + 1.0) / 2.0))
+	draw_polygon(outline, colors)
+	outline.append(outline[0])
+	draw_polyline(outline, edge, 1.2, true)
 
 
 func _draw_liquid(well: Rect2, height: float) -> void:
 	var slots := ceili(height - 0.001)
+	var cell_height := well.size.y / _capacity
 	var start := 0
 	while start < slots:
 		var color := _color_at(start)
 		var end := start + 1
 		while end < slots and _color_at(end) == color:
 			end += 1
-		var cell_height := well.size.y / _capacity
 		var surface := end == slots
 		var top := well.end.y - minf(end, height) * cell_height
 		var bottom := well.end.y - start * cell_height
@@ -174,11 +216,12 @@ func _draw_water(well: Rect2, top: float, bottom: float, tint: Color, surface: b
 	for index in range(SURFACE_STEPS + 1):
 		var t := float(index) / SURFACE_STEPS
 		var edge_distance := minf(t, 1.0 - t) * well.size.x
-		var base := minf(bottom, _rounded_base(well.end.y, edge_distance))
-		var wave := 0.0
+		var base := _water_base(well, bottom, t, edge_distance)
+		var wave := _interface_wave(t)
 		if surface:
 			var amplitude := clampf((bottom - top) / 12.0, 0.0, 1.0)
-			wave = (2.0 * sin(TAU * t + _surface_phase + _phase_offset) - 1.7 * pow(2.0 * t - 1.0, 2.0)) * amplitude
+			wave = (2.6 * sin(TAU * t + _surface_phase + _phase_offset)
+				- 1.7 * pow(2.0 * t - 1.0, 2.0)) * amplitude
 		var x := well.position.x + t * well.size.x
 		var y := minf(top + wave, base - 0.08)
 		points.append(Vector2(x, y))
@@ -188,7 +231,7 @@ func _draw_water(well: Rect2, top: float, bottom: float, tint: Color, surface: b
 	for index in range(SURFACE_STEPS, -1, -1):
 		var t := float(index) / SURFACE_STEPS
 		var edge_distance := minf(t, 1.0 - t) * well.size.x
-		var y := minf(bottom, _rounded_base(well.end.y, edge_distance))
+		var y := _water_base(well, bottom, t, edge_distance)
 		points.append(Vector2(well.position.x + t * well.size.x, y))
 		colors.append(tint.darkened(0.10 + 0.08 * absf(2.0 * t - 1.0)))
 	draw_polygon(points, colors)
@@ -196,24 +239,23 @@ func _draw_water(well: Rect2, top: float, bottom: float, tint: Color, surface: b
 		draw_polyline(crest, Color("#ffffffac"), 1.4, true)
 
 
-func _rounded_base(bottom: float, edge_distance: float) -> float:
-	const RADIUS := 14.0
-	var inset := maxf(0.0, RADIUS - edge_distance)
-	return bottom - RADIUS + sqrt(RADIUS * RADIUS - inset * inset)
+func _interface_wave(t: float) -> float:
+	return 1.25 * sin(TAU * t + _phase_offset)
 
 
-func _draw_round_rect(rect: Rect2, fill: Color, top: int, bottom := -1, border := 0,
-		stroke := Color.TRANSPARENT) -> void:
-	var radius := top if bottom < 0 else bottom
-	var key := [fill, top, radius, border, stroke]
+func _water_base(well: Rect2, bottom: float, t: float, edge_distance: float) -> float:
+	var radius := well.size.x / 2.0
+	var inset := maxf(0.0, radius - edge_distance)
+	var rounded := well.end.y - radius + sqrt(maxf(0.0, radius * radius - inset * inset))
+	var boundary := bottom if is_equal_approx(bottom, well.end.y) else bottom + _interface_wave(t)
+	return minf(boundary, rounded)
+
+
+func _draw_round_rect(rect: Rect2, fill: Color, radius: int) -> void:
+	var key := [fill, radius]
 	if not _styles.has(key):
 		var style := StyleBoxFlat.new()
 		style.bg_color = fill
-		style.corner_radius_top_left = top
-		style.corner_radius_top_right = top
-		style.corner_radius_bottom_left = radius
-		style.corner_radius_bottom_right = radius
-		style.set_border_width_all(border)
-		style.border_color = stroke
+		style.set_corner_radius_all(radius)
 		_styles[key] = style
 	draw_style_box(_styles[key], rect)

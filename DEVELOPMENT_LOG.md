@@ -4,6 +4,8 @@
 
 Removed symbols from the liquid and replaced the solid fills with a lighter palette, gradients, and gently moving surfaces. Matching layers render as a single body of water. Glass reflections, stream highlights, and a small splash reinforce the effect during a pour.
 
+Refined the tubes using the bottle reference. The glass now has a recessed oval opening, visible headspace, a rounded base, and highlights that continue across the empty and filled parts of the tube.
+
 Checked the idle and pouring states in Godot. The headless suite passed 2,914 checks with zero failures.
 
 ## Milestone 3 · Level System
