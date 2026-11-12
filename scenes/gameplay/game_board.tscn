@@ -1,0 +1,145 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/gameplay/game_board.gd" id="1"]
+[ext_resource type="Theme" path="res://assets/theme/tinttube.tres" id="2"]
+
+[sub_resource type="Gradient" id="BackgroundGradient"]
+colors = PackedColorArray(0.97, 0.972, 1, 1, 0.92, 0.906, 0.99, 1)
+
+[sub_resource type="GradientTexture2D" id="BackgroundTexture"]
+gradient = SubResource("BackgroundGradient")
+width = 32
+height = 128
+fill_to = Vector2(0.2, 1)
+
+[node name="GameBoard" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2")
+script = ExtResource("1")
+
+[node name="Background" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = SubResource("BackgroundTexture")
+expand_mode = 1
+
+[node name="SafeArea" type="MarginContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="Content" type="VBoxContainer" parent="SafeArea"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="SafeArea/Content"]
+layout_mode = 2
+theme_type_variation = &"Heading"
+theme_override_colors/font_color = Color(0.29, 0.22, 0.72, 1)
+theme_override_font_sizes/font_size = 37
+text = "TintTube"
+horizontal_alignment = 1
+
+[node name="Header" type="HBoxContainer" parent="SafeArea/Content"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 14
+
+[node name="Levels" type="OptionButton" parent="SafeArea/Content/Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(138, 48)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+accessibility_name = "Select sample level"
+
+[node name="Difficulty" type="Label" parent="SafeArea/Content/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0.38, 0.36, 1)
+theme_override_font_sizes/font_size = 16
+
+[node name="Moves" type="Label" parent="SafeArea/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+horizontal_alignment = 1
+
+[node name="PlayArea" type="CenterContainer" parent="SafeArea/Content"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="TubeRows" type="VBoxContainer" parent="SafeArea/Content/PlayArea"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Status" type="Label" parent="SafeArea/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.33, 0.32, 0.46, 1)
+theme_override_font_sizes/font_size = 16
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="Actions" type="HBoxContainer" parent="SafeArea/Content"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 12
+
+[node name="Undo" type="Button" parent="SafeArea/Content/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(104, 52)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+text = "Undo"
+
+[node name="Restart" type="Button" parent="SafeArea/Content/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(104, 52)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+text = "Restart"
+
+[node name="Victory" type="PanelContainer" parent="SafeArea/Content"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 4
+
+[node name="VictoryContent" type="VBoxContainer" parent="SafeArea/Content/Victory"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="VictoryTitle" type="Label" parent="SafeArea/Content/Victory/VictoryContent"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"Heading"
+theme_override_colors/font_color = Color(0.06, 0.39, 0.24, 1)
+theme_override_font_sizes/font_size = 22
+horizontal_alignment = 1
+
+[node name="NextLevel" type="Button" parent="SafeArea/Content/Victory/VictoryContent"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(164, 48)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+text = "Next Level"

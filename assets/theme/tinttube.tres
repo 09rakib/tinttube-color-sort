@@ -1,0 +1,95 @@
+[gd_resource type="Theme" load_steps=9 format=3]
+
+[ext_resource type="FontFile" path="res://assets/fonts/nunito-sans.woff2" id="1"]
+
+[sub_resource type="FontVariation" id="BodyFont"]
+base_font = ExtResource("1")
+variation_opentype = {2003265652: 650}
+
+[sub_resource type="FontVariation" id="HeadingFont"]
+base_font = ExtResource("1")
+variation_opentype = {2003265652: 900}
+
+[sub_resource type="StyleBoxFlat" id="Button"]
+bg_color = Color(0.404, 0.349, 0.91, 1)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_left = 18
+corner_radius_bottom_right = 18
+content_margin_left = 15.0
+content_margin_right = 15.0
+content_margin_top = 9.0
+content_margin_bottom = 9.0
+shadow_color = Color(0.29, 0.25, 0.67, 0.18)
+shadow_size = 4
+shadow_offset = Vector2(0, 3)
+
+[sub_resource type="StyleBoxFlat" id="ButtonHover"]
+bg_color = Color(0.326, 0.273, 0.81, 1)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_left = 18
+corner_radius_bottom_right = 18
+content_margin_left = 15.0
+content_margin_right = 15.0
+content_margin_top = 9.0
+content_margin_bottom = 9.0
+
+[sub_resource type="StyleBoxFlat" id="Disabled"]
+bg_color = Color(0.906, 0.898, 0.963, 1)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_left = 18
+corner_radius_bottom_right = 18
+content_margin_left = 15.0
+content_margin_right = 15.0
+content_margin_top = 9.0
+content_margin_bottom = 9.0
+
+[sub_resource type="StyleBoxFlat" id="Focus"]
+draw_center = false
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.232, 0.17, 0.59, 1)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_left = 18
+corner_radius_bottom_right = 18
+expand_margin_left = 2.0
+expand_margin_top = 2.0
+expand_margin_right = 2.0
+expand_margin_bottom = 2.0
+
+[sub_resource type="StyleBoxFlat" id="WinPanel"]
+bg_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 24
+corner_radius_top_right = 24
+corner_radius_bottom_left = 24
+corner_radius_bottom_right = 24
+content_margin_left = 18.0
+content_margin_right = 18.0
+content_margin_top = 12.0
+content_margin_bottom = 12.0
+shadow_color = Color(0.29, 0.25, 0.67, 0.16)
+shadow_size = 7
+shadow_offset = Vector2(0, 4)
+
+[resource]
+default_font = SubResource("BodyFont")
+default_font_size = 18
+Button/colors/font_color = Color(1, 1, 1, 1)
+Button/colors/font_hover_color = Color(1, 1, 1, 1)
+Button/colors/font_pressed_color = Color(1, 1, 1, 1)
+Button/colors/font_focus_color = Color(1, 1, 1, 1)
+Button/colors/font_disabled_color = Color(0.34, 0.31, 0.47, 1)
+Button/styles/normal = SubResource("Button")
+Button/styles/hover = SubResource("ButtonHover")
+Button/styles/pressed = SubResource("ButtonHover")
+Button/styles/disabled = SubResource("Disabled")
+Button/styles/focus = SubResource("Focus")
+Label/colors/font_color = Color(0.141, 0.141, 0.227, 1)
+Heading/base_type = &"Label"
+Heading/fonts/font = SubResource("HeadingFont")
+PanelContainer/styles/panel = SubResource("WinPanel")

@@ -1,3 +1,6 @@
 /node_modules/
 /.tinttube-tools/
 /stitch_tinttube_mobile_design_system/
+
+/.godot/
+/build/
