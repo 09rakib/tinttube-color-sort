@@ -1,5 +1,11 @@
 # TintTube development log
 
+## Liquid rendering update
+
+Removed symbols from the liquid and replaced the solid fills with a lighter palette, gradients, and gently moving surfaces. Matching layers render as a single body of water. Glass reflections, stream highlights, and a small splash reinforce the effect during a pour.
+
+Checked the idle and pouring states in Godot. The headless suite passed 2,914 checks with zero failures.
+
 ## Milestone 3 · Level System
 
 Expanded the catalog from five to 50 puzzles. Kept the first five boards and selected 45 additional boards using a seeded shuffle, move-count filters, and checks for equivalent color and tube permutations. The tiers are Tutorial (1–10), Easy (11–30), and Medium (31–50).

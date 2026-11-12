@@ -2,12 +2,12 @@ extends Button
 ## Keeps the button hit area fixed while drawing the animated glass and liquid.
 
 const LIQUIDS := [
-	Color("#6759e8"), Color("#007b78"), Color("#ba2636"), Color("#a55707"),
-	Color("#275eb5"), Color("#a73c85"),
+	Color("#a597ee"), Color("#67d9bc"), Color("#f28c86"), Color("#f5c06b"),
+	Color("#76c7f5"), Color("#ee9bd4"),
 ]
-const GLYPHS := ["★", "◆", "●", "▲", "■", "✚"]
-const COLOR_NAMES := ["purple", "teal", "red", "amber", "blue", "pink"]
+const COLOR_NAMES := ["lavender", "mint", "coral", "amber", "blue", "pink"]
 const LIFT := Vector2(0, -9)
+const SURFACE_STEPS := 12
 
 var pose_offset := Vector2.ZERO
 var pose_angle := 0.0
@@ -19,11 +19,30 @@ var _liquid_delta := 0.0
 var _incoming_color := 0
 var _feedback: Tween
 var _styles := {}
+var _surface_phase := 0.0
+var _surface_clock := 0.0
+var _phase_offset := 0.0
+
+
+func _ready() -> void:
+	set_process(false)
+
+
+func _process(delta: float) -> void:
+	if not is_visible_in_tree():
+		return
+	_surface_clock += delta
+	if _surface_clock >= 0.05:
+		_surface_phase = fposmod(_surface_phase + _surface_clock * 2.5, TAU)
+		_surface_clock = 0.0
+		queue_redraw()
 
 
 func show_tube(index: int, layers: Array, capacity: int, selected: bool) -> void:
 	_layers = layers
 	_capacity = capacity
+	_phase_offset = index * 0.85
+	_update_surface_motion()
 	if selected != _selected:
 		_selected = selected
 		_animate_selection()
@@ -55,7 +74,12 @@ func set_pose(offset: Vector2, angle: float = 0.0, glass_scale: float = 1.0) -> 
 func preview_liquid(delta: float, color: int) -> void:
 	_liquid_delta = delta
 	_incoming_color = color
+	_update_surface_motion()
 	queue_redraw()
+
+
+func _update_surface_motion() -> void:
+	set_process(_layers.size() + _liquid_delta > 0.0)
 
 
 func stop_feedback() -> void:
@@ -104,36 +128,78 @@ func _draw() -> void:
 	draw_set_transform(pivot + pose_offset, pose_angle, Vector2.ONE * pose_scale)
 	var body := Rect2(Vector2(9, 13) - pivot, size - Vector2(18, 20))
 	var well := body.grow(-5)
-	var cell_height := well.size.y / _capacity
 	var liquid_height := clampf(_layers.size() + _liquid_delta, 0.0, _capacity)
 
 	_draw_round_rect(Rect2(body.position.x, body.end.y - 8, body.size.x, 13),
-		Color("#34276a18"), 10)
-	_draw_round_rect(body, Color("#ffffffbc"), 20, 20, 2,
-		Color("#6759e8") if _selected else Color.WHITE)
+		Color("#665a9f19"), 10)
+	_draw_round_rect(body, Color("#faffffac"), 20, 20, 2,
+		Color("#8170e6") if _selected else Color("#ffffffed"))
+	_draw_liquid(well, liquid_height)
 
-	for index in range(ceili(liquid_height)):
-		var fill := minf(1.0, liquid_height - index)
-		if fill <= 0.001:
-			break
-		var liquid: int = _layers[index] if index < _layers.size() else _incoming_color
-		var height := fill * cell_height
-		var cell := Rect2(well.position.x, well.end.y - index * cell_height - height,
-			well.size.x, height + 0.15)
-		var bottom_radius := 14 if index == 0 else 0
-		var top_radius := 5 if liquid_height - index <= 1.0 else 0
-		_draw_round_rect(cell, liquid_tint(liquid), top_radius, bottom_radius)
-		if height > 7.0:
-			draw_rect(Rect2(cell.position + Vector2(4, 3), Vector2(3, height - 5)),
-				Color(1, 1, 1, 0.18))
-		if height >= 14.0:
-			var font := ThemeDB.fallback_font
-			var baseline := cell.position.y + (height + font.get_ascent(14) - font.get_descent(14)) / 2.0
-			draw_string(font, Vector2(cell.position.x, baseline), GLYPHS[liquid % GLYPHS.size()],
-				HORIZONTAL_ALIGNMENT_CENTER, cell.size.x, 14, Color(1, 1, 1, 0.76 * fill))
+	# Long reflections run down the glass wall, independent of the liquid level.
+	var glint := Rect2(body.position + Vector2(5, 10), Vector2(4, body.size.y * 0.69))
+	_draw_round_rect(glint, Color("#ffffff74"), 2)
+	var edge := Rect2(body.end.x - 7, body.position.y + 13, 2, body.size.y * 0.60)
+	_draw_round_rect(edge, Color("#ffffff56"), 1)
 
 	var rim := Rect2(body.position - Vector2(3, 4), Vector2(body.size.x + 6, 9))
-	_draw_round_rect(rim, Color.WHITE, 5, 5, 1, Color("#e6e1fc"))
+	_draw_round_rect(rim, Color("#ffffffed"), 5, 5, 1, Color("#dcd6f1"))
+	_draw_round_rect(rim.grow_individual(-5, -2, -5, -3), Color("#dcd8ec85"), 3)
+
+
+func _draw_liquid(well: Rect2, height: float) -> void:
+	var slots := ceili(height - 0.001)
+	var start := 0
+	while start < slots:
+		var color := _color_at(start)
+		var end := start + 1
+		while end < slots and _color_at(end) == color:
+			end += 1
+		var cell_height := well.size.y / _capacity
+		var surface := end == slots
+		var top := well.end.y - minf(end, height) * cell_height
+		var bottom := well.end.y - start * cell_height
+		_draw_water(well, top, bottom, liquid_tint(color), surface)
+		start = end
+
+
+func _color_at(index: int) -> int:
+	return _layers[index] if index < _layers.size() else _incoming_color
+
+
+func _draw_water(well: Rect2, top: float, bottom: float, tint: Color, surface: bool) -> void:
+	var points := PackedVector2Array()
+	var colors := PackedColorArray()
+	var crest := PackedVector2Array()
+	for index in range(SURFACE_STEPS + 1):
+		var t := float(index) / SURFACE_STEPS
+		var edge_distance := minf(t, 1.0 - t) * well.size.x
+		var base := minf(bottom, _rounded_base(well.end.y, edge_distance))
+		var wave := 0.0
+		if surface:
+			var amplitude := clampf((bottom - top) / 12.0, 0.0, 1.0)
+			wave = (2.0 * sin(TAU * t + _surface_phase + _phase_offset) - 1.7 * pow(2.0 * t - 1.0, 2.0)) * amplitude
+		var x := well.position.x + t * well.size.x
+		var y := minf(top + wave, base - 0.08)
+		points.append(Vector2(x, y))
+		colors.append(tint.lightened(0.26 if surface else 0.13))
+		if surface and index > 0 and index < SURFACE_STEPS:
+			crest.append(Vector2(x, y + 0.6))
+	for index in range(SURFACE_STEPS, -1, -1):
+		var t := float(index) / SURFACE_STEPS
+		var edge_distance := minf(t, 1.0 - t) * well.size.x
+		var y := minf(bottom, _rounded_base(well.end.y, edge_distance))
+		points.append(Vector2(well.position.x + t * well.size.x, y))
+		colors.append(tint.darkened(0.10 + 0.08 * absf(2.0 * t - 1.0)))
+	draw_polygon(points, colors)
+	if surface and bottom - top > 3.0:
+		draw_polyline(crest, Color("#ffffffac"), 1.4, true)
+
+
+func _rounded_base(bottom: float, edge_distance: float) -> float:
+	const RADIUS := 14.0
+	var inset := maxf(0.0, RADIUS - edge_distance)
+	return bottom - RADIUS + sqrt(RADIUS * RADIUS - inset * inset)
 
 
 func _draw_round_rect(rect: Rect2, fill: Color, top: int, bottom := -1, border := 0,
