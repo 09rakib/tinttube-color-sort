@@ -26,15 +26,17 @@ var _surface_clock := 0.0
 var _phase_offset := 0.0
 var _rim_color := Color("#85c6cf")
 var _hint_color := Color.TRANSPARENT
+var _color_labels := false
+var _reduced_motion := false
+var _top_color_name := "Empty"
 
 
 func _ready() -> void:
-	set_process(false)
+	visibility_changed.connect(_update_surface_motion)
+	_update_surface_motion()
 
 
 func _process(delta: float) -> void:
-	if not is_visible_in_tree():
-		return
 	_surface_clock += delta
 	if _surface_clock >= 0.05:
 		_surface_phase = fposmod(_surface_phase + _surface_clock * 2.5, TAU)
@@ -53,8 +55,13 @@ func show_tube(index: int, layers: Array, capacity: int, selected: bool) -> void
 	var description := "empty" if layers.is_empty() else "%d of %d layers" % [layers.size(), capacity]
 	tooltip_text = "Tube %d · %s" % [index + 1, description]
 	accessibility_name = tooltip_text
+	_top_color_name = "Empty"
 	if not layers.is_empty():
-		accessibility_name += " · %s on top" % COLOR_NAMES[int(layers.back()) % COLOR_NAMES.size()]
+		var color_names := PackedStringArray()
+		for layer in layers:
+			color_names.append(COLOR_NAMES[int(layer) % COLOR_NAMES.size()])
+		_top_color_name = color_names[-1].capitalize()
+		accessibility_name += " · Bottom to top: %s" % ", ".join(color_names)
 	if selected:
 		accessibility_name += " · selected"
 	queue_redraw()
@@ -71,6 +78,16 @@ func set_rim_color(color: Color) -> void:
 
 func set_hint_color(color: Color) -> void:
 	_hint_color = color
+	queue_redraw()
+
+
+func apply_accessibility(color_labels: bool, reduced_motion: bool) -> void:
+	_color_labels = color_labels
+	_reduced_motion = reduced_motion
+	if _reduced_motion:
+		stop_feedback()
+		set_pose(Vector2.ZERO)
+	_update_surface_motion()
 	queue_redraw()
 
 
@@ -93,7 +110,7 @@ func preview_liquid(delta: float, color: int) -> void:
 
 
 func _update_surface_motion() -> void:
-	set_process(_layers.size() + _liquid_delta > 0.0)
+	set_process(not _reduced_motion and is_visible_in_tree() and _layers.size() + _liquid_delta > 0.0)
 
 
 func stop_feedback() -> void:
@@ -110,6 +127,8 @@ func reset_effects() -> void:
 
 
 func shake() -> void:
+	if _reduced_motion:
+		return
 	stop_feedback()
 	var rest := LIFT if _selected else Vector2.ZERO
 	_feedback = create_tween()
@@ -122,6 +141,9 @@ func shake() -> void:
 
 func _animate_selection() -> void:
 	stop_feedback()
+	if _reduced_motion:
+		set_pose(Vector2.ZERO)
+		return
 	var target := LIFT if _selected else Vector2.ZERO
 	if pose_offset.is_equal_approx(target):
 		return
@@ -140,7 +162,8 @@ func _mouth() -> Vector2:
 func _draw() -> void:
 	var pivot := _mouth()
 	draw_set_transform(pivot + pose_offset, pose_angle, Vector2.ONE * pose_scale)
-	var body := Rect2(-GLASS_WIDTH / 2.0, 0.0, GLASS_WIDTH, size.y - pivot.y - 7.0)
+	var label_space := 18.0 if _color_labels else 0.0
+	var body := Rect2(-GLASS_WIDTH / 2.0, 0.0, GLASS_WIDTH, size.y - pivot.y - 7.0 - label_space)
 	var well := body.grow(-3.0)
 	well.position.y += HEADSPACE
 	well.size.y -= HEADSPACE
@@ -160,6 +183,10 @@ func _draw() -> void:
 	_draw_round_rect(far_edge, Color("#ffffff8a"), 1)
 
 	_draw_glass_rim(body.size.x / 2.0 + 4.0)
+	if _color_labels:
+		draw_set_transform(Vector2.ZERO)
+		draw_string(get_theme_font("font", "Label"), Vector2(0.0, size.y - 1.0), _top_color_name,
+			HORIZONTAL_ALIGNMENT_CENTER, size.x, 13, Color("#33294c"))
 
 
 func _draw_glass_body(body: Rect2) -> void:

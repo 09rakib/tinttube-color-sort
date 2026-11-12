@@ -7,6 +7,7 @@ const AudioManager = preload("res://scripts/services/audio_manager.gd")
 
 const Solver = preload("res://scripts/gameplay/puzzle_solver.gd")
 const Progress = preload("res://scripts/services/player_progress.gd")
+const Daily = preload("res://scripts/gameplay/daily_generator.gd")
 const FIRST_SOLUTION := [Vector2i(0, 2), Vector2i(1, 0), Vector2i(1, 2)]
 
 var _checks := 0
@@ -24,6 +25,7 @@ func _run() -> void:
 	_check(DirAccess.make_dir_absolute(folder) == OK, "Create an isolated save directory")
 	_test_progress(folder + "/unit")
 	_test_economy(folder + "/economy")
+	_test_daily(folder + "/daily")
 	await _test_gameplay_scene(folder + "/scene")
 	for file in DirAccess.get_files_at(folder):
 		DirAccess.remove_absolute(folder + "/" + file)
@@ -142,7 +144,7 @@ func _test_progress(path: String) -> void:
 	reloaded = Progress.new(50, path)
 	_check(reloaded.current_level == 2 and reloaded.best_moves(1) == 6,
 		"Loading falls back to the last valid slot")
-	var newer := '{"version":3,"revision":4}'
+	var newer := '{"version":4,"revision":4}'
 	_write_text(slot_a, newer)
 	reloaded = Progress.new(50, path)
 	reloaded.record_win(2, 4)
@@ -201,6 +203,53 @@ func _test_economy(path: String) -> void:
 		"Wallet, preferences, cosmetics and progress survive reload")
 	var failed := Progress.new(50, path + "-missing/subfolder")
 	_check(not failed.buy_hint() and failed.coins == 100, "A failed save does not charge for a hint")
+
+
+func _test_daily(path: String) -> void:
+	var started := Time.get_ticks_msec()
+	var sample := {}
+	for date in ["2024-02-29", "2026-01-01", "2026-05-07", "2026-08-13",
+		"2026-11-12", "2026-11-13", "2026-12-31", "2027-01-01"]:
+		var generator := Daily.Generation.new(date)
+		while not generator.advance(96):
+			pass
+		var board := generator.result
+		_check(not board.is_empty() and not Daily.restore(board).is_empty(), "%s yields a valid daily" % date)
+		if board.is_empty():
+			continue
+		var rules := Rules.new()
+		rules.start_level(board.tubes, board.capacity)
+		var solution := Solver.solve(board.tubes, board.capacity)
+		for move: Vector2i in solution.moves:
+			_check(rules.pour_liquid(move.x, move.y) > 0, "%s daily solution uses legal moves" % date)
+		_check(rules.is_level_complete() and solution.moves.size() == board.par_moves,
+			"%s daily solves at its recorded move target" % date)
+		if date == "2026-11-12":
+			sample = board
+	print("Generated and replayed eight daily boards in %d ms." % (Time.get_ticks_msec() - started))
+	if sample.is_empty():
+		return
+	var repeated := Daily.Generation.new(sample.date)
+	while not repeated.advance(250):
+		pass
+	_check(repeated.result == sample, "The date reproduces the same puzzle at different solver batch sizes")
+	_write_text(path + ".0.json", '{"version":2,"revision":1,"current_level":1,"best_moves":[],"coins":160,"settings":{"music":false,"effects":true,"vibration":true},"owned":["rose"],"theme":"lavender","rim":"rose"}')
+	var progress := Progress.new(50, path)
+	_check(progress.coins == 160 and progress.rim_id == "rose" and not progress.settings.music
+		and not progress.settings.color_labels, "Version 2 wallet and preferences survive the upgrade")
+	progress.save_daily_board(sample)
+	_check(progress.record_daily_win(sample.date, 17) == 40 and progress.coins == 200,
+		"The daily first clear adds 40 coins")
+	_check(progress.record_daily_win(sample.date, 15) == 0 and progress.coins == 200,
+		"Replaying the same date updates the best without duplicating its reward")
+	progress.set_setting("color_labels", true)
+	progress.set_setting("reduced_motion", true)
+	progress = Progress.new(50, path)
+	_check(progress.daily_count() == 1 and progress.daily_best(sample.date) == 15
+		and progress.daily_board(sample.date) == sample and progress.settings.color_labels
+		and progress.settings.reduced_motion and progress.current_level == 1,
+		"Daily history and accessibility preferences save separately from campaign progress")
+	_check(progress.record_daily_win("2026-02-30", 3) == 0, "An invalid calendar date cannot award coins")
 
 
 func _test_gameplay_scene(path: String) -> void:
@@ -383,8 +432,38 @@ func _test_gameplay_scene(path: String) -> void:
 	await process_frame
 	_check((reopened.get_node("%Difficulty") as Label).text.begins_with("Level 2 ·"),
 		"Launching the scene again resumes the saved level")
+	await _test_daily_scene(reopened)
 	reopened.queue_free()
-	await process_frame
+	await create_timer(0.12).timeout
+
+
+func _test_daily_scene(board: Control) -> void:
+	var animation := board.get_node("%PourAnimation")
+	var moves := board.get_node("%Moves") as Label
+	var progress = board.get("_progress")
+	board.call("_on_tube_pressed", 0)
+	board.call("_on_tube_pressed", 3)
+	animation.settle()
+	_check(moves.text == "Moves: 1", "The campaign has an active attempt before Daily")
+	await board.call("_open_daily")
+	board.call("_play_daily")
+	var daily: Dictionary = board.get("_daily_level")
+	_check(not daily.is_empty() and moves.text == "Moves: 0", "Daily opens its own board")
+	if daily.is_empty():
+		return
+	progress.set_setting("reduced_motion", true)
+	board.call("_apply_settings")
+	var wallet: int = progress.coins
+	var solution := Solver.solve(daily.tubes, daily.capacity)
+	for move: Vector2i in solution.moves:
+		board.call("_on_tube_pressed", move.x)
+		board.call("_on_tube_pressed", move.y)
+		animation.settle()
+	_check(progress.daily_best(daily.date) == solution.moves.size() and progress.coins == wallet + 40,
+		"A daily victory saves its own result and coins")
+	board.call("_choose_level", 2)
+	_check(moves.text == "Moves: 1" and progress.current_level == 2,
+		"Returning from Daily restores the same campaign attempt")
 
 
 func _wait_for_pour(animation: Node) -> void:

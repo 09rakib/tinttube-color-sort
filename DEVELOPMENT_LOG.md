@@ -1,5 +1,13 @@
 # TintTube development log
 
+## Milestone 5 · Daily Challenges and Accessibility
+
+Added an offline puzzle for each local calendar date. A seeded shuffle supplies candidates, and the solver checks every accepted board against a 10–18 move target. The save keeps the approved board and completion history, and awards 40 coins on the first clear of each date. Switching to Daily preserves the current campaign attempt in memory. Achievements track milestones in both modes.
+
+Added optional color names below the glass, full layer names for screen readers, and a reduced-motion setting. Hidden tubes stop updating their liquid surfaces.
+
+The Godot suite passed 3,053 checks. It generated and replayed eight daily boards in 847 ms, checked same-date reproducibility, and covered migration and daily reward deduplication. In the Windows Compatibility renderer on a GTX 1650 at 390 × 820, two 180-frame samples of Level 50 averaged 60 FPS both idle and during pours. The 95th-percentile frame intervals were 16.9 ms idle and 17.0 ms during pours. Android device performance remains unmeasured.
+
 ## Milestone 4 · UI and Rewards
 
 Added Home, Settings, and Shop to the native game. The shop equips themes and glass rims. Music, sound effects, and Android vibration have separate saved preferences.

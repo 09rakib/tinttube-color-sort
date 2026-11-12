@@ -2,6 +2,8 @@ extends VBoxContainer
 
 signal play_requested(level: int)
 signal levels_requested
+signal daily_requested
+signal daily_play_requested
 signal appearance_changed
 signal settings_changed
 
@@ -15,6 +17,12 @@ var _warning: Label
 var _home: VBoxContainer
 var _settings: VBoxContainer
 var _shop: VBoxContainer
+var _daily: VBoxContainer
+var _achievements: VBoxContainer
+var _daily_date: Label
+var _daily_details: Label
+var _daily_play: Button
+var _achievement_rows: Array[Label] = []
 var _play: Button
 var _continue: Button
 var _title: Label
@@ -31,7 +39,7 @@ func _ready() -> void:
 	header.add_theme_constant_override("separation", 12)
 	add_child(header)
 	_back = _button(header, "Back", func() -> void: open("home", _progress))
-	_title = _label(header, "", 24, true)
+	_title = _label(header, "", 20, true)
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var badge := PanelContainer.new()
 	header.add_child(badge)
@@ -43,6 +51,8 @@ func _ready() -> void:
 	_build_home()
 	_build_settings()
 	_build_shop()
+	_build_daily()
+	_build_achievements()
 
 
 func open(page: String, progress: Progress) -> void:
@@ -50,8 +60,10 @@ func open(page: String, progress: Progress) -> void:
 	_home.visible = page == "home"
 	_settings.visible = page == "settings"
 	_shop.visible = page == "shop"
+	_daily.visible = page == "daily"
+	_achievements.visible = page == "achievements"
 	_back.visible = page != "home"
-	_title.text = "" if page == "home" else page.capitalize()
+	_title.text = "" if page == "home" else ("Daily Challenge" if page == "daily" else page.capitalize())
 	_shop_message.text = ""
 	_refresh()
 	show()
@@ -94,6 +106,14 @@ func _build_home() -> void:
 	for button in actions.get_children():
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.theme_type_variation = &"SecondaryButton"
+	var challenges := HBoxContainer.new()
+	challenges.add_theme_constant_override("separation", 10)
+	_home.add_child(challenges)
+	_button(challenges, "Daily Challenge", func() -> void: daily_requested.emit())
+	_button(challenges, "Achievements", func() -> void: open("achievements", _progress))
+	for button in challenges.get_children():
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.theme_type_variation = &"SecondaryButton"
 
 
 func _build_settings() -> void:
@@ -101,14 +121,10 @@ func _build_settings() -> void:
 	_settings.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var audio := _card(_settings)
 	_label(audio, "Audio & feedback", 20, true)
-	for preference in [["music", "Music"], ["effects", "Sound effects"], ["vibration", "Vibration"]]:
-		var key: String = preference[0]
-		var toggle := CheckButton.new()
-		toggle.text = preference[1]
-		toggle.custom_minimum_size.y = 48
-		toggle.toggled.connect(_change_setting.bind(key))
-		audio.add_child(toggle)
-		_toggles[key] = toggle
+	_add_toggles(audio, [["music", "Music"], ["effects", "Sound effects"], ["vibration", "Vibration"]])
+	var access := _card(_settings)
+	_label(access, "Accessibility", 20, true)
+	_add_toggles(access, [["color_labels", "Tube color names"], ["reduced_motion", "Reduce motion"]])
 	var info := _card(_settings)
 	_label(info, "TintTube · Color Sort Puzzle", 18, true)
 	var privacy := AcceptDialog.new()
@@ -118,6 +134,64 @@ func _build_settings() -> void:
 	add_child(privacy)
 	var privacy_button := _button(info, "Privacy", func() -> void: privacy.popup_centered(Vector2i(300, 180)))
 	privacy_button.theme_type_variation = &"SecondaryButton"
+
+
+func _add_toggles(card: VBoxContainer, preferences: Array) -> void:
+	for preference in preferences:
+		var key: String = preference[0]
+		var toggle := CheckButton.new()
+		toggle.text = preference[1]
+		toggle.custom_minimum_size.y = 48
+		toggle.toggled.connect(_change_setting.bind(key))
+		card.add_child(toggle)
+		_toggles[key] = toggle
+
+
+func _build_daily() -> void:
+	_daily = _column(self, 14)
+	_daily.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	var card := _card(_daily)
+	_daily_date = _label(card, "", 25, true)
+	_daily_details = _label(card, "", 17)
+	_daily_details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_daily_play = _button(card, "Play challenge", func() -> void: daily_play_requested.emit())
+
+
+func show_daily(date: String, board: Dictionary, preparing: bool) -> void:
+	_daily_date.text = date
+	_daily_play.disabled = board.is_empty()
+	if preparing:
+		_daily_details.text = "Preparing today’s puzzle…"
+	elif board.is_empty():
+		_daily_details.text = "Could not prepare this puzzle. Reopen Daily Challenge to retry."
+	else:
+		var best := _progress.daily_best(date)
+		_daily_play.text = "Replay challenge" if best > 0 else "Play challenge"
+		_daily_details.text = "Medium · %d-move target\n" % board.par_moves
+		_daily_details.text += ("Completed · Best %d moves" % best) if best > 0 else ("First clear earns %d coins" % Rewards.DAILY_REWARD)
+
+
+func _build_achievements() -> void:
+	_achievements = _column(self, 13)
+	_achievements.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	for title in ["First Sort", "Ten Levels", "Daily Debut", "Daily Regular"]:
+		var card := _card(_achievements)
+		_label(card, title, 20, true)
+		_achievement_rows.append(_label(card, "", 16))
+
+
+func _update_achievements() -> void:
+	var completed := _progress.completed_count()
+	var dailies := _progress.daily_count()
+	var rows := [[completed, 1, "Campaign levels"], [completed, 10, "Campaign levels"],
+		[dailies, 1, "Daily challenges"], [dailies, 7, "Daily challenges"]]
+	for index in range(rows.size()):
+		var data: Array = rows[index]
+		var unlocked: bool = data[0] >= data[1]
+		_achievement_rows[index].text = "%s · %d/%d %s" % [
+			"Unlocked" if unlocked else "Locked", mini(data[0], data[1]), data[1], data[2]]
+		_achievement_rows[index].add_theme_color_override("font_color",
+			Color("#06756f") if unlocked else Color("#554a73"))
 
 
 func _build_shop() -> void:
@@ -176,6 +250,7 @@ func _refresh() -> void:
 	_warning.visible = not _progress.save_warning.is_empty()
 	_continue.visible = _progress.completed_count() > 0
 	_continue.text = "Continue · Level %d" % _progress.current_level
+	_update_achievements()
 	for key in _toggles:
 		_toggles[key].set_pressed_no_signal(_progress.settings[key])
 	for item in Rewards.ITEMS:
@@ -185,6 +260,7 @@ func _refresh() -> void:
 		button.text = "Equipped" if equipped else ("Equip" if _progress.owns(item.id) else "%d coins" % item.price)
 	for tube in _demo_tubes:
 		tube.set_rim_color(Rewards.item(_progress.rim_id).color)
+		tube.apply_accessibility(false, _progress.settings.reduced_motion)
 
 
 func _card(parent: Node) -> VBoxContainer:

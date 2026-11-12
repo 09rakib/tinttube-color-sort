@@ -13,6 +13,8 @@ const StreamView = preload("res://scripts/ui/pour_stream.gd")
 var _tween: Tween
 var _source: TubeView
 var _destination: TubeView
+var reduced_motion := false
+var _stream_active := false
 
 
 func is_active() -> bool:
@@ -24,6 +26,12 @@ func animate(source: TubeView, destination: TubeView, amount: int, color: int) -
 	_destination = destination
 	_source.stop_feedback()
 	_destination.reset_effects()
+	var stream_duration := 0.26 + 0.04 * amount
+	_tween = create_tween()
+	if reduced_motion:
+		_tween.tween_method(_draw_transfer.bind(amount, color, stream_duration), 0.0, 1.0, stream_duration)
+		_tween.finished.connect(settle)
+		return
 	_source.z_index = 6
 
 	var source_mouth := _source.mouth_position()
@@ -38,10 +46,8 @@ func animate(source: TubeView, destination: TubeView, amount: int, color: int) -
 	var start := Vector4(_source.pose_offset.x, _source.pose_offset.y, 0.0, 1.0)
 	var tipped := Vector4(offset.x, offset.y, direction * deg_to_rad(115.0), 0.82)
 
-	_tween = create_tween()
 	_tween.tween_method(_move_tube.bind(start, tipped), 0.0, 1.0, 0.20) \
 		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
-	var stream_duration := 0.26 + 0.04 * amount
 	_tween.tween_method(_draw_transfer.bind(amount, color, stream_duration), 0.0, 1.0, stream_duration)
 	_tween.tween_callback(_end_stream)
 	_tween.tween_method(_move_tube.bind(tipped, rest), 0.0, 1.0, 0.20) \
@@ -69,18 +75,20 @@ func _move_tube(weight: float, start: Vector4, finish: Vector4) -> void:
 
 
 func _draw_transfer(progress: float, amount: int, color: int, duration: float) -> void:
-	var starting := not _stream.visible
 	var moved := amount * clampf((progress - 0.06) / 0.88, 0.0, 1.0)
 	_source.preview_liquid(-moved, color)
 	_destination.preview_liquid(moved, color)
-	_stream.show_stream(to_local_point(_source.mouth_position()),
-		to_local_point(_destination.mouth_position()), TubeView.liquid_tint(color), progress)
-	if starting:
+	if not reduced_motion:
+		_stream.show_stream(to_local_point(_source.mouth_position()),
+			to_local_point(_destination.mouth_position()), TubeView.liquid_tint(color), progress)
+	if not _stream_active:
+		_stream_active = true
 		stream_started.emit(duration)
 
 
 func _end_stream() -> void:
-	if _stream.visible:
+	if _stream_active:
+		_stream_active = false
 		_stream.hide()
 		stream_ended.emit()
 

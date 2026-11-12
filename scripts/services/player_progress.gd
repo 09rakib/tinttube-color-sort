@@ -2,9 +2,13 @@ extends RefCounted
 ## Stores progress in alternating files. A write only replaces the inactive slot.
 
 const Rewards = preload("res://scripts/services/rewards.gd")
-const SCHEMA_VERSION := 2
+const Daily = preload("res://scripts/gameplay/daily_generator.gd")
+const SCHEMA_VERSION := 3
 const DEFAULT_PATH := "user://tinttube-progress"
-const DEFAULT_SETTINGS := {"music": true, "effects": true, "vibration": true}
+const DEFAULT_SETTINGS := {
+	"music": true, "effects": true, "vibration": true,
+	"color_labels": false, "reduced_motion": false,
+}
 
 var current_level := 1
 var save_warning := ""
@@ -15,6 +19,8 @@ var rim_id := "aqua"
 
 var _best_moves: Array[int] = []
 var _owned: Array[String] = ["lavender", "aqua"]
+var _daily_wins := {}
+var _daily_board := {}
 var _level_count: int
 var _base_path: String
 var _revision := 0
@@ -83,6 +89,37 @@ func set_setting(key: String, enabled: bool) -> void:
 	_save()
 
 
+func daily_board(date: String) -> Dictionary:
+	return _daily_board.duplicate(true) if _daily_board.get("date", "") == date else {}
+
+
+func save_daily_board(board: Dictionary) -> void:
+	_daily_board = board.duplicate(true)
+	_dirty = true
+	_save()
+
+
+func daily_count() -> int:
+	return _daily_wins.size()
+
+
+func daily_best(date: String) -> int:
+	return _daily_wins.get(date, 0)
+
+
+func record_daily_win(date: String, moves: int) -> int:
+	if not Daily.valid_date(date) or moves <= 0:
+		return 0
+	var previous := daily_best(date)
+	var reward := Rewards.DAILY_REWARD if previous == 0 else 0
+	if previous == 0 or moves < previous:
+		_daily_wins[date] = moves
+		coins += reward
+		_dirty = true
+	_save()
+	return reward
+
+
 func owns(id: String) -> bool:
 	return _owned.has(id)
 
@@ -147,7 +184,7 @@ func _load() -> void:
 		if version > SCHEMA_VERSION:
 			_read_only = true
 			save_warning = "A newer save exists. Saving is paused."
-		if version != 1 and version != SCHEMA_VERSION:
+		if version < 1 or version > SCHEMA_VERSION:
 			continue
 		var revision := _number(raw.get("revision"))
 		var level := _number(raw.get("current_level"))
@@ -164,12 +201,17 @@ func _load() -> void:
 			parsed_moves.append(moves)
 		if parsed_moves.size() != raw_moves.size():
 			continue
+		var parsed_daily := _parse_daily(raw, version)
+		if parsed_daily.is_empty():
+			continue
 		if not _load_extras(raw, version, parsed_moves.size()):
 			continue
 		_revision = revision
 		_active_slot = slot
 		current_level = level
 		_best_moves = parsed_moves
+		_daily_wins = parsed_daily.wins
+		_daily_board = parsed_daily.board
 	if found_file and _active_slot < 0 and not _read_only:
 		_read_only = true
 		save_warning = "Progress could not be recovered. Saving is paused."
@@ -190,9 +232,10 @@ func _load_extras(raw: Dictionary, version: int, completed: int) -> bool:
 		return false
 	var parsed_settings := {}
 	for key in DEFAULT_SETTINGS:
-		if not preferences.get(key) is bool:
+		var enabled: Variant = preferences.get(key, DEFAULT_SETTINGS[key])
+		if not enabled is bool:
 			return false
-		parsed_settings[key] = preferences[key]
+		parsed_settings[key] = enabled
 	var items: Array[String] = ["lavender", "aqua"]
 	for id in owned:
 		if not id is String or Rewards.item(id).is_empty():
@@ -211,6 +254,23 @@ func _load_extras(raw: Dictionary, version: int, completed: int) -> bool:
 	theme_id = theme
 	rim_id = rim
 	return true
+
+
+func _parse_daily(raw: Dictionary, version: int) -> Dictionary:
+	if version < 3:
+		return {"wins": {}, "board": {}}
+	var source: Variant = raw.get("daily_wins")
+	var cache: Variant = raw.get("daily_board")
+	if not source is Dictionary or not cache is Dictionary:
+		return {}
+	var wins := {}
+	for key in source:
+		var moves := _number(source[key])
+		if not key is String or not Daily.valid_date(key) or moves <= 0:
+			return {}
+		wins[key] = moves
+	# This board is a cache. Regenerate it if damaged while keeping the reward history.
+	return {"wins": wins, "board": Daily.restore(cache)}
 
 
 func _save() -> void:
@@ -233,6 +293,8 @@ func _save() -> void:
 		"owned": _owned,
 		"theme": theme_id,
 		"rim": rim_id,
+		"daily_wins": _daily_wins,
+		"daily_board": _daily_board,
 	}))
 	file.flush()
 	var write_error := file.get_error()

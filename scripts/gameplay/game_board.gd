@@ -13,6 +13,7 @@ const GameMenu = preload("res://scripts/ui/game_menu.gd")
 const StarRating = preload("res://scripts/ui/star_rating.gd")
 const Rewards = preload("res://scripts/services/rewards.gd")
 const Solver = preload("res://scripts/gameplay/puzzle_solver.gd")
+const Daily = preload("res://scripts/gameplay/daily_generator.gd")
 const COLUMNS := 4
 const SELECT_SOURCE := "Tap a tube to select its top color."
 
@@ -54,6 +55,10 @@ var _hint_dialog: ConfirmationDialog
 var _searching := false
 var _hint_move := Vector2i(-1, -1)
 var _last_reward := 0
+var _daily_level := {}
+var _prepared_daily := {}
+var _daily_generation_date := ""
+var _campaign_rules: Rules
 
 
 func _ready() -> void:
@@ -76,6 +81,8 @@ func _ready() -> void:
 	_apply_settings()
 	_menu.play_requested.connect(_play_from_home)
 	_menu.levels_requested.connect(_open_levels)
+	_menu.daily_requested.connect(_open_daily)
+	_menu.daily_play_requested.connect(_play_daily)
 	_menu.appearance_changed.connect(_apply_appearance)
 	_menu.settings_changed.connect(_apply_settings)
 	_home.pressed.connect(_open_home)
@@ -129,6 +136,55 @@ func _open_home() -> void:
 	_menu.open("home", _progress)
 
 
+func _open_daily() -> void:
+	if _busy():
+		return
+	var date := Time.get_date_string_from_system()
+	_content.hide()
+	_level_select.hide()
+	_menu.open("daily", _progress)
+	_prepared_daily = _progress.daily_board(date)
+	_menu.show_daily(date, _prepared_daily, _prepared_daily.is_empty())
+	if not _prepared_daily.is_empty():
+		_daily_generation_date = ""
+		return
+	if _daily_generation_date == date:
+		return
+	_daily_generation_date = date
+	var generation := Daily.Generation.new(date)
+	await get_tree().process_frame
+	while not generation.advance(96):
+		await get_tree().process_frame
+		if _daily_generation_date != date:
+			return
+	if _daily_generation_date != date:
+		return
+	_daily_generation_date = ""
+	_prepared_daily = generation.result
+	if not _prepared_daily.is_empty():
+		_progress.save_daily_board(_prepared_daily)
+	_menu.show_daily(date, _prepared_daily, false)
+
+
+func _play_daily() -> void:
+	if _busy() or _prepared_daily.is_empty():
+		return
+	if _prepared_daily.date != Time.get_date_string_from_system():
+		_open_daily()
+		return
+	_close_levels()
+	if _daily_level.get("date", "") == _prepared_daily.date:
+		if _rules.is_level_complete():
+			_restart_level()
+		return
+	if _daily_level.is_empty():
+		_campaign_rules = _rules
+		_rules = Rules.new()
+	_daily_level = _prepared_daily
+	_rules.start_level(_daily_level.tubes, _daily_level.capacity)
+	_build_board(_daily_level)
+
+
 func _back_from_levels() -> void:
 	if _levels_from_home:
 		_open_home()
@@ -153,30 +209,42 @@ func _choose_level(level: int) -> void:
 		return
 	_audio.play_effect(AudioManager.Effect.BUTTON)
 	_close_levels()
+	var returning_from_daily := not _daily_level.is_empty()
+	if returning_from_daily:
+		_daily_level = {}
+		_rules = _campaign_rules
+		_campaign_rules = null
 	if level != _level_index + 1:
 		_load_level(level - 1)
+	elif returning_from_daily:
+		_build_board(_levels[_level_index])
 	else:
 		_refresh()
 
 
 func _load_level(index: int) -> void:
 	var level := _levels[index]
-	var tubes: Array = level.tubes
-	_rules.start_level(tubes, level.capacity)
+	_rules.start_level(level.tubes, level.capacity)
+	_level_index = index
+	_build_board(level)
+
+
+func _build_board(level: Dictionary) -> void:
 	_last_reward = 0
 	_hint_move = Vector2i(-1, -1)
-	_level_index = index
-	_difficulty.text = "Level %d · %s" % [level.id, String(level.difficulty).capitalize()]
+	var heading := "Level %d" % level.id if _daily_level.is_empty() else "Daily"
+	_difficulty.text = "%s · %s" % [heading, String(level.difficulty).capitalize()]
 
 	for old_row in _rows.get_children():
 		_rows.remove_child(old_row)
 		old_row.queue_free()
 	_tube_views.clear()
 
-	var row_count := ceili(float(tubes.size()) / COLUMNS)
-	var column_count := ceili(float(tubes.size()) / row_count)
+	var tube_count: int = level.tubes.size()
+	var row_count := ceili(float(tube_count) / COLUMNS)
+	var column_count := ceili(float(tube_count) / row_count)
 	var row: HBoxContainer
-	for tube_index in range(tubes.size()):
+	for tube_index in range(tube_count):
 		if tube_index % column_count == 0:
 			row = HBoxContainer.new()
 			row.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -188,8 +256,13 @@ func _load_level(index: int) -> void:
 		_tube_views.append(tube)
 
 	_apply_appearance()
+	_apply_settings()
 	_clear_selection()
 	_refresh()
+
+
+func _active_level() -> Dictionary:
+	return _levels[_level_index] if _daily_level.is_empty() else _daily_level
 
 
 func _on_tube_pressed(index: int) -> void:
@@ -211,8 +284,11 @@ func _on_tube_pressed(index: int) -> void:
 		if amount > 0:
 			_clear_hint()
 			if _rules.is_level_complete():
-				_last_reward = _progress.record_win(_level_index + 1, _rules.move_count(),
-					_levels[_level_index].par_moves)
+				if _daily_level.is_empty():
+					_last_reward = _progress.record_win(_level_index + 1, _rules.move_count(),
+						_levels[_level_index].par_moves)
+				else:
+					_last_reward = _progress.record_daily_win(_daily_level.date, _rules.move_count())
 			_status.text = "Pouring…"
 			_pour.animate(_tube_views[_selected], _tube_views[index], amount, color)
 			_update_controls()
@@ -257,7 +333,9 @@ func _restart_level() -> void:
 func _advance_level() -> void:
 	if _busy() or not _rules.is_level_complete():
 		return
-	if _level_index + 1 < _levels.size():
+	if not _daily_level.is_empty():
+		_open_daily()
+	elif _level_index + 1 < _levels.size():
 		_choose_level(_level_index + 2)
 	else:
 		_open_levels()
@@ -270,11 +348,12 @@ func _clear_selection() -> void:
 
 func _refresh() -> void:
 	var complete := _rules.is_level_complete()
+	var level := _active_level()
 	if not complete and _victory_tween != null:
 		_victory_tween.kill()
 		_victory_tween = null
 	for index in range(_tube_views.size()):
-		_tube_views[index].show_tube(index, _rules.layers_at(index), _levels[_level_index].capacity,
+		_tube_views[index].show_tube(index, _rules.layers_at(index), level.capacity,
 			index == _selected)
 	_moves.text = "Moves: %d" % _rules.move_count()
 	_wallet.text = "%d coins" % _progress.coins
@@ -285,12 +364,16 @@ func _refresh() -> void:
 	_status.visible = not complete
 	_victory.visible = complete
 	if complete:
-		_stars.show_rating(Rewards.stars(_rules.move_count(), _levels[_level_index].par_moves))
+		_stars.show_rating(Rewards.stars(_rules.move_count(), level.par_moves))
 		_reward_label.text = "%d moves" % _rules.move_count()
 		if _last_reward > 0:
 			_reward_label.text += " · +%d coins" % _last_reward
-		_victory_title.text = "Level complete!" if _level_index + 1 < _levels.size() else "All levels complete!"
-		_next_level.text = "Next Level" if _level_index + 1 < _levels.size() else "Level Select"
+		if not _daily_level.is_empty():
+			_victory_title.text = "Daily challenge complete!"
+			_next_level.text = "Daily Challenge"
+		else:
+			_victory_title.text = "Level complete!" if _level_index + 1 < _levels.size() else "All levels complete!"
+			_next_level.text = "Next Level" if _level_index + 1 < _levels.size() else "Level Select"
 		if not was_visible:
 			_reveal_victory()
 
@@ -311,13 +394,16 @@ func _update_controls() -> void:
 func _reveal_victory() -> void:
 	if _victory_tween != null:
 		_victory_tween.kill()
+	_audio.play_effect(AudioManager.Effect.COMPLETE)
+	_victory.modulate.a = 1.0
+	if _progress.settings.reduced_motion:
+		return
 	_victory.modulate.a = 0.0
 	_victory_tween = create_tween()
 	_victory_tween.tween_property(_victory, "modulate:a", 1.0, 0.24)
 	if _last_reward > 0:
 		_victory_tween.parallel().tween_method(_show_wallet, float(_progress.coins - _last_reward),
 			float(_progress.coins), 0.48)
-	_audio.play_effect(AudioManager.Effect.COMPLETE)
 
 
 func _show_wallet(amount: float) -> void:
@@ -330,6 +416,9 @@ func _busy() -> bool:
 
 func _apply_settings() -> void:
 	_audio.apply_settings(_progress.settings)
+	_pour.reduced_motion = _progress.settings.reduced_motion
+	for tube in _tube_views:
+		tube.apply_accessibility(_progress.settings.color_labels, _progress.settings.reduced_motion)
 
 
 func _apply_appearance() -> void:
@@ -354,7 +443,7 @@ func _find_hint() -> void:
 	_searching = true
 	_status.text = "Finding the next move…"
 	_update_controls()
-	var search := Solver.Search.new(_rules.snapshot(), _levels[_level_index].capacity, Solver.DEFAULT_SEARCH_LIMIT)
+	var search := Solver.Search.new(_rules.snapshot(), _active_level().capacity, Solver.DEFAULT_SEARCH_LIMIT)
 	await get_tree().process_frame
 	while not search.advance(96):
 		await get_tree().process_frame

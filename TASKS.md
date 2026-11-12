@@ -26,13 +26,18 @@
 - [x] Implement coins and star ratings.
 - [x] Connect hints to the solver and coin balance.
 
-## Next milestone — Daily Challenges and Accessibility
+## Milestone 5 — Daily Challenges and Accessibility
 
-- [ ] Add verified generation, daily challenges, achievements, accessibility improvements, and performance measurements.
+- [x] Add solver-verified daily generation, date-based rewards, and achievements.
+- [x] Add optional tube color names and reduced motion.
+- [x] Measure frame intervals in the Windows build.
+
+## Next milestone — Monetization and QA
+
+- [ ] Integrate and test supported ads, prepare the billing interface, and run device regression tests.
 
 ## Later milestones
 
-- [ ] 6 · Integrate and test supported ads, prepare the billing interface, and run device regression tests.
 - [ ] 7 · Configure release export, verify Play Console requirements, and prepare the signed Android release.
 
 ## Release dependencies

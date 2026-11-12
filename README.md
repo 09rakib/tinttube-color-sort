@@ -14,6 +14,8 @@ Progress saves automatically when you complete or change levels, buy or equip a 
 
 The wallet starts with 100 coins. A first clear earns 20 coins, and the first three-star clear of that level adds 10. Three stars require matching the shortest solution, and two stars allow up to three extra moves. A confirmed hint costs 50 coins once the solver finds a valid next move. Shop cosmetics are earned with game coins and can be equipped again for free.
 
+**Daily Challenge** uses the device's local calendar date to generate a puzzle offline. The first clear for that date earns 40 coins. Replays can improve the daily best, and Achievements track campaign clears and completed daily challenges. Settings offer optional color names below the tubes and reduced motion.
+
 The selected tube lifts, legal pours animate the transfer, and invalid targets shake. Board controls become available again when the pour finishes. A resize or application pause settles the active move and restores the tube positions. The pour cue blends TintTube's original sound with an edited excerpt of [Pouring liquid in a cup by OxidVideos](https://pixabay.com/sound-effects/film-special-effects-pouring-liquid-in-a-cup-386762/). The remaining cues are original, synthesized WAV files.
 
 ## Verify the native build locally
