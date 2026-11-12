@@ -10,6 +10,8 @@ TintTube is an offline-first, portrait color-sort puzzle for Android. The native
 
 Levels are stored bottom-to-top in `data/levels/core_levels.json`. The move counter tracks successful pours since the start of the current attempt, with undone moves removed from the count. The sample picker keeps all five boards available for testing. The current milestone holds progress in memory during the session.
 
+The selected tube lifts, legal pours animate the transfer, and invalid targets shake. Board controls become available again when the pour finishes. A resize or application pause settles the active move and restores the tube positions. The five bundled sound effects are original, synthesized WAV files.
+
 ## Verify the native build locally
 
 Run these commands from the repository root with Godot on your PATH. On Windows, use the downloaded `_console.exe` executable in place of `godot` for terminal output.
@@ -20,7 +22,7 @@ godot --headless --path . --quit-after 5
 godot --headless --path . --script res://tests/run_core_tests.gd
 ```
 
-The test runner validates the rules, replays a solution for each sample, and sends pointer input to the native gameplay scene. It exits with code 1 if a check fails.
+The test runner validates the rules, replays a solution for each sample, and sends pointer input to the native gameplay scene. It checks liquid animation, input locking, interruptions, and audio cue selection. It exits with code 1 if a check fails.
 
 ## Android export
 

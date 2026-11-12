@@ -3,6 +3,7 @@ extends SceneTree
 const Rules = preload("res://scripts/gameplay/game_rules.gd")
 const Catalog = preload("res://scripts/gameplay/level_catalog.gd")
 const BoardScene = preload("res://scenes/gameplay/game_board.tscn")
+const AudioManager = preload("res://scripts/services/audio_manager.gd")
 
 # Zero-based tube indices. These paths are replayed through the same rules used by the scene.
 const SOLUTIONS := [
@@ -108,6 +109,11 @@ func _test_gameplay_scene() -> void:
 	var status := board.get_node("%Status") as Label
 	var victory := board.get_node("%Victory") as PanelContainer
 	var level_picker := board.get_node("%Levels") as OptionButton
+	var undo := board.get_node("%Undo") as Button
+	var restart := board.get_node("%Restart") as Button
+	var animation := board.get_node("%PourAnimation")
+	var stream := animation.get_node("Stream") as Control
+	var audio := board.get_node("%Audio")
 	_check(rows.get_child_count() == 1 and level_picker.item_count == 5, "Native board loads level 1")
 	if rows.get_child_count() == 0 or rows.get_child(0).get_child_count() < 3:
 		board.queue_free()
@@ -119,33 +125,97 @@ func _test_gameplay_scene() -> void:
 
 	_click(third)
 	_check(status.text.begins_with("Choose a tube"), "An empty tap does not select a source")
+	_check((audio.get_child(AudioManager.Effect.INVALID) as AudioStreamPlayer).playing,
+		"Invalid moves play the error cue")
+	var hit_area := first.get_global_rect()
 	_click(first)
 	_check(status.text.begins_with("Tap an empty"), "Tap selects a source")
+	await create_timer(0.18).timeout
+	_check(first.get("pose_offset").y < -8.0 and first.get_global_rect() == hit_area,
+		"Selected tube lifts while its hit area stays fixed")
 	_click(second)
 	_check(status.text.begins_with("That tube") and moves.text == "Moves: 0", "Invalid tap rejects the pour")
 	_click(third)
-	_check(moves.text == "Moves: 1", "A legal tap pair pours and updates the counter")
-	_click(board.get_node("%Undo") as Button)
+	_check(animation.is_active() and moves.text == "Moves: 0", "Pour locks before updating the counter")
+	_check(first.disabled and second.disabled and third.disabled and undo.disabled and restart.disabled
+		and level_picker.disabled, "Pour locks tubes, Undo, Restart, and level selection")
+	_click(first)
+	_click(second)
+	undo.pressed.emit()
+	restart.pressed.emit()
+	level_picker.item_selected.emit(4)
+	_check(level_picker.selected == 0 and animation.is_active(), "Repeated and queued actions are ignored")
+
+	var stream_deadline := Time.get_ticks_msec() + 2000
+	while animation.is_active() and not stream.visible and Time.get_ticks_msec() < stream_deadline:
+		await process_frame
+	_check(stream.visible and not is_zero_approx(float(first.get("pose_angle"))), "Tipped tube shows the stream")
+	_check((audio.get_child(AudioManager.Effect.POUR) as AudioStreamPlayer).playing,
+		"Stream starts the pouring cue")
+	await create_timer(0.12).timeout
+	var drained := float(first.get("_liquid_delta"))
+	var received := float(third.get("_liquid_delta"))
+	_check(drained < 0.0 and received < 1.0 and is_equal_approx(received, -drained),
+		"During the stream, the source and destination show the same fractional transfer")
+	await _wait_for_pour(animation)
+	_check(moves.text == "Moves: 1" and not stream.visible and not first.disabled,
+		"Exactly one move is reflected after the animation")
+	_check(first.get("_layers") == [0, 0, 0] and third.get("_layers") == [1],
+		"Final rendered tube layers match the committed move")
+	_click(undo)
 	_check(moves.text == "Moves: 0", "Undo button restores the move counter")
+
 	_click(first)
 	_click(third)
-	_click(board.get_node("%Restart") as Button)
+	board.notification(Node.NOTIFICATION_APPLICATION_PAUSED)
+	_check(moves.text == "Moves: 1" and not animation.is_active() and not stream.visible
+		and not first.disabled, "Backgrounding settles the committed move exactly once")
+	_check(first.get("pose_offset") == Vector2.ZERO and first.get("pose_angle") == 0.0,
+		"Interrupted animation resets the source pose")
+	_click(restart)
 	_check(moves.text == "Moves: 0", "Restart button resets the board")
 	for move in SOLUTIONS[0]:
 		_click(first_row.get_child(move[0]) as Button)
 		_click(first_row.get_child(move[1]) as Button)
+		await _wait_for_pour(animation)
 	_check(victory.visible and moves.text == "Moves: 3" and first.disabled, "A win locks pours and shows victory")
-	_click(board.get_node("%Undo") as Button)
+	_check((audio.get_child(AudioManager.Effect.COMPLETE) as AudioStreamPlayer).playing,
+		"Victory plays the completion cue")
+	await process_frame
+	await process_frame
+	_click(undo)
 	_check(not victory.visible and not first.disabled, "Undo reopens the board after victory")
+	await process_frame
+	await process_frame
 	_click(second)
 	_click(third)
+	await _wait_for_pour(animation)
 	await process_frame
 	await process_frame
 	_click(board.get_node("%NextLevel") as Button)
 	_check(level_picker.selected == 1 and not victory.visible and moves.text == "Moves: 0",
 		"Next Level loads the next sample")
-	board.queue_free()
 	await process_frame
+	await process_frame
+	_click(rows.get_child(0).get_child(0) as Button)
+	_click(rows.get_child(1).get_child(0) as Button)
+	_check(animation.is_active(), "Multi-layer pour starts on the next board")
+	board.size += Vector2(1, 0)
+	_check(not animation.is_active() and moves.text == "Moves: 1", "Resizing settles a multi-layer pour")
+	var resized_source := rows.get_child(0).get_child(0)
+	var resized_destination := rows.get_child(1).get_child(0)
+	_check(resized_source.get("_layers") == [0, 0] and resized_destination.get("_layers") == [1, 1],
+		"Interrupted multi-layer pour displays both transferred layers")
+	board.queue_free()
+	# Give the audio mixer time to release the just-stopped cues before closing the engine.
+	await create_timer(0.12).timeout
+
+
+func _wait_for_pour(animation: Node) -> void:
+	var deadline := Time.get_ticks_msec() + 2000
+	while animation.is_active() and Time.get_ticks_msec() < deadline:
+		await process_frame
+	_check(not animation.is_active(), "Pour animation settles within two seconds")
 
 
 func _click(button: Button) -> void:

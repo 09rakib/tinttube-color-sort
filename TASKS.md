@@ -8,15 +8,20 @@
 - [x] Add five sample levels and verify a solution path for each.
 - [x] Run the native gameplay test suite and document the results.
 
-## Next milestone — Visual Gameplay
+## Milestone 2 — Visual Gameplay
 
-- [ ] Animate tube lifting, tilting, pouring, and invalid moves.
-- [ ] Keep the board and rendered liquid synchronized during animations.
-- [ ] Add licensed sound effects and polish input feedback.
+- [x] Animate tube lifting, tilting, pouring, invalid moves, and victory reveal.
+- [x] Keep the board and rendered liquid synchronized during animations.
+- [x] Add original sound effects and polish input feedback.
+
+## Next milestone — Level System
+
+- [ ] Implement the independent solver and validate 50 levels.
+- [ ] Build native level selection and progression.
+- [ ] Implement versioned local progress saves.
 
 ## Later milestones
 
-- [ ] 3 · Verify 50 levels, implement selection and progression, add local saves and a solver.
 - [ ] 4 · Build native home, settings, and shop screens, implement coins, stars, and solver-backed hints.
 - [ ] 5 · Add verified generation, daily challenges, achievements, accessibility improvements, and performance measurements.
 - [ ] 6 · Integrate and test supported ads, prepare the billing interface, and run device regression tests.
