@@ -3,6 +3,7 @@ extends RefCounted
 
 const Rules = preload("res://scripts/gameplay/game_rules.gd")
 const CORE_LEVELS := "res://data/levels/core_levels.json"
+const SUPPORTED_COLORS := 6
 
 
 static func load_core_levels() -> Array[Dictionary]:
@@ -29,9 +30,12 @@ static func _parse_level(raw: Variant) -> Dictionary:
 		return {}
 	var id := _unsigned_integer(raw.get("id"))
 	var capacity := _unsigned_integer(raw.get("capacity"))
+	var par_moves := _unsigned_integer(raw.get("par_moves"))
 	var difficulty: Variant = raw.get("difficulty")
 	var raw_tubes: Variant = raw.get("tubes")
-	if id <= 0 or capacity != Rules.DEFAULT_CAPACITY or not difficulty is String or difficulty.is_empty():
+	if id <= 0 or capacity != Rules.DEFAULT_CAPACITY or par_moves <= 0:
+		return {}
+	if not difficulty is String or difficulty.is_empty():
 		return {}
 	if not raw_tubes is Array:
 		return {}
@@ -44,7 +48,7 @@ static func _parse_level(raw: Variant) -> Dictionary:
 		var tube: Array[int] = []
 		for raw_layer in raw_tube:
 			var color := _unsigned_integer(raw_layer)
-			if color < 0:
+			if color < 0 or color >= SUPPORTED_COLORS:
 				return {}
 			tube.append(color)
 			totals[color] = totals.get(color, 0) + 1
@@ -55,11 +59,9 @@ static func _parse_level(raw: Variant) -> Dictionary:
 	for quantity in totals.values():
 		if quantity % capacity != 0:
 			return {}
-	var rules := Rules.new()
-	rules.start_level(tubes, capacity)
-	if rules.is_level_complete():
+	if Rules.is_solved(tubes, capacity):
 		return {}
-	return {"id": id, "difficulty": difficulty, "capacity": capacity, "tubes": tubes}
+	return {"id": id, "difficulty": difficulty, "capacity": capacity, "tubes": tubes, "par_moves": par_moves}
 
 
 static func _unsigned_integer(value: Variant) -> int:

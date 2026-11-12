@@ -14,15 +14,20 @@
 - [x] Keep the board and rendered liquid synchronized during animations.
 - [x] Add original sound effects and polish input feedback.
 
-## Next milestone — Level System
+## Milestone 3 — Level System
 
-- [ ] Implement the independent solver and validate 50 levels.
-- [ ] Build native level selection and progression.
-- [ ] Implement versioned local progress saves.
+- [x] Implement the independent solver and replay solutions for 50 levels.
+- [x] Build native level selection and sequential unlocking.
+- [x] Implement versioned local saves for completion, best moves, and the current level.
+
+## Next milestone — UI and Rewards
+
+- [ ] Build the native Home, Settings, and Shop screens.
+- [ ] Implement coins and star ratings.
+- [ ] Connect hints to the solver and coin balance.
 
 ## Later milestones
 
-- [ ] 4 · Build native home, settings, and shop screens, implement coins, stars, and solver-backed hints.
 - [ ] 5 · Add verified generation, daily challenges, achievements, accessibility improvements, and performance measurements.
 - [ ] 6 · Integrate and test supported ads, prepare the billing interface, and run device regression tests.
 - [ ] 7 · Configure release export, verify Play Console requirements, and prepare the signed Android release.

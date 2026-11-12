@@ -31,19 +31,16 @@ static func is_valid_layout(tubes: Array, capacity: int) -> bool:
 
 
 func can_pour(source: int, destination: int) -> bool:
-	return _pour_amount(source, destination) > 0
+	return legal_pour_amount(_tubes, _capacity, source, destination) > 0
 
 
 ## Returns the number of layers moved, or zero for an invalid move.
 func pour_liquid(source: int, destination: int) -> int:
-	var amount := _pour_amount(source, destination)
+	var amount := legal_pour_amount(_tubes, _capacity, source, destination)
 	if amount == 0:
 		return 0
 	_history.append(snapshot())
-	var source_tube: Array = _tubes[source]
-	var destination_tube: Array = _tubes[destination]
-	for layer in range(amount):
-		destination_tube.append(source_tube.pop_back())
+	transfer_layers(_tubes, source, destination, amount)
 	return amount
 
 
@@ -60,11 +57,15 @@ func restart_level() -> void:
 
 
 func is_level_complete() -> bool:
+	return is_solved(_tubes, _capacity)
+
+
+static func is_solved(tubes: Array, capacity: int) -> bool:
 	var has_filled_tube := false
-	for tube in _tubes:
+	for tube in tubes:
 		if tube.is_empty():
 			continue
-		if tube.size() != _capacity:
+		if tube.size() != capacity:
 			return false
 		for layer in tube:
 			if layer != tube.front():
@@ -96,23 +97,31 @@ func move_count() -> int:
 	return _history.size()
 
 
-func _pour_amount(source: int, destination: int) -> int:
-	if source == destination or source < 0 or source >= _tubes.size():
+static func legal_pour_amount(tubes: Array, capacity: int, source: int, destination: int) -> int:
+	if source == destination or source < 0 or source >= tubes.size():
 		return 0
-	if destination < 0 or destination >= _tubes.size():
+	if destination < 0 or destination >= tubes.size():
 		return 0
-	var from: Array = _tubes[source]
-	var into: Array = _tubes[destination]
-	if from.is_empty() or into.size() >= _capacity:
+	var from: Array = tubes[source]
+	var into: Array = tubes[destination]
+	if from.is_empty() or into.size() >= capacity:
 		return 0
 	var color: int = from.back()
 	if not into.is_empty() and into.back() != color:
 		return 0
 
 	var amount := 0
-	var space := _capacity - into.size()
+	var space := capacity - into.size()
 	for index in range(from.size() - 1, -1, -1):
 		if from[index] != color or amount == space:
 			break
 		amount += 1
 	return amount
+
+
+## Applies a transfer already validated by legal_pour_amount.
+static func transfer_layers(tubes: Array, source: int, destination: int, amount: int) -> void:
+	var source_tube: Array = tubes[source]
+	var destination_tube: Array = tubes[destination]
+	for layer in range(amount):
+		destination_tube.append(source_tube.pop_back())

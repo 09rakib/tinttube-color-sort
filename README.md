@@ -1,14 +1,16 @@
 # TintTube Color Sort
 
-TintTube is an offline-first, portrait color-sort puzzle for Android. The native Godot project currently includes five playable tutorial puzzles. The browser prototype remains available as a visual reference for the remaining screens.
+TintTube is an offline-first, portrait color-sort puzzle for Android. The native Godot project includes 50 solver-verified puzzles across Tutorial, Easy, and Medium. The browser prototype remains available as a visual reference for the remaining screens.
 
 ## Run the Godot game
 
 1. Install the standard, non-.NET edition of [Godot 4.7.2](https://godotengine.org/download/archive/4.7.2-stable/).
 2. Import `project.godot` in the project manager and press **F5** after the first import.
-3. Pick a sample level. Tap or click a filled tube, then choose an empty tube or one with the same top color and room. Undo and Restart are available below the board. Solving the puzzle opens the next sample.
+3. Tap or click a filled tube, then choose an empty tube or one with the same top color and room. Undo and Restart are available below the board. Complete a puzzle to unlock the next one. Open **Levels** to see your progress and replay unlocked puzzles.
 
-Levels are stored bottom-to-top in `data/levels/core_levels.json`. The move counter tracks successful pours since the start of the current attempt, with undone moves removed from the count. The sample picker keeps all five boards available for testing. The current milestone holds progress in memory during the session.
+Levels are stored bottom-to-top in `data/levels/core_levels.json` with their shortest solution length. The move counter tracks successful pours in the current attempt, with undone moves removed from the count.
+
+Progress saves automatically when you complete or change levels. The game resumes the last selected level from its starting board and keeps completions, unlocked levels, and best move counts. It stores versioned progress in alternating `user://tinttube-progress.*.json` files and falls back to the previous valid save if the latest one is damaged.
 
 The selected tube lifts, legal pours animate the transfer, and invalid targets shake. Board controls become available again when the pour finishes. A resize or application pause settles the active move and restores the tube positions. The five bundled sound effects are original, synthesized WAV files.
 
@@ -22,7 +24,7 @@ godot --headless --path . --quit-after 5
 godot --headless --path . --script res://tests/run_core_tests.gd
 ```
 
-The test runner validates the rules, replays a solution for each sample, and sends pointer input to the native gameplay scene. It checks liquid animation, input locking, interruptions, and audio cue selection. It exits with code 1 if a check fails.
+The test runner solves and replays all 50 boards, validates their recorded move targets, and tests progression, save recovery, and the native gameplay controls. It exits with code 1 if a check fails.
 
 ## Android export
 

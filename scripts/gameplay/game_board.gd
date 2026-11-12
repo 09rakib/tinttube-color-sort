@@ -7,11 +7,16 @@ const TubeView = preload("res://scripts/ui/tube.gd")
 const TubeScene = preload("res://scenes/gameplay/tube.tscn")
 const PourAnimation = preload("res://scripts/ui/pour_animation.gd")
 const AudioManager = preload("res://scripts/services/audio_manager.gd")
+const Progress = preload("res://scripts/services/player_progress.gd")
+const LevelSelect = preload("res://scripts/ui/level_select.gd")
 const COLUMNS := 4
 const SELECT_SOURCE := "Tap a tube to select its top color."
 
 @onready var _safe_area: MarginContainer = %SafeArea
-@onready var _level_picker: OptionButton = %Levels
+@onready var _level_picker: Button = %Levels
+@onready var _content: VBoxContainer = %Content
+@onready var _level_select: LevelSelect = %LevelSelect
+@onready var _save_status: Label = %SaveStatus
 @onready var _difficulty: Label = %Difficulty
 @onready var _moves: Label = %Moves
 @onready var _rows: VBoxContainer = %TubeRows
@@ -25,6 +30,8 @@ const SELECT_SOURCE := "Tap a tube to select its top color."
 @onready var _audio: AudioManager = %Audio
 
 var _rules := Rules.new()
+var progress_path := Progress.DEFAULT_PATH
+var _progress: Progress
 var _levels: Array[Dictionary] = []
 var _tube_views: Array[TubeView] = []
 var _level_index := 0
@@ -47,13 +54,15 @@ func _ready() -> void:
 		_undo.disabled = true
 		_restart.disabled = true
 		return
-	for level in _levels:
-		_level_picker.add_item("Level %d" % level.id)
-	_level_picker.item_selected.connect(_choose_level)
+	_progress = Progress.new(_levels.size(), progress_path)
+	_level_select.build(_levels)
+	_level_picker.pressed.connect(_open_levels)
+	_level_select.level_selected.connect(_choose_level)
+	_level_select.back_requested.connect(_close_levels)
 	_undo.pressed.connect(_undo_move)
 	_restart.pressed.connect(_restart_level)
 	_next_level.pressed.connect(_advance_level)
-	_load_level(0)
+	_load_level(_progress.current_level - 1)
 
 
 func _notification(what: int) -> void:
@@ -62,12 +71,28 @@ func _notification(what: int) -> void:
 		_audio.stop_effects()
 
 
-func _choose_level(index: int) -> void:
+func _open_levels() -> void:
 	if _pour.is_active():
-		_level_picker.select(_level_index)
 		return
 	_audio.play_effect(AudioManager.Effect.BUTTON)
-	_load_level(index)
+	_content.hide()
+	_level_select.show_progress(_progress, _level_index + 1)
+
+
+func _close_levels() -> void:
+	_level_select.hide()
+	_content.show()
+
+
+func _choose_level(level: int) -> void:
+	if _pour.is_active() or not _progress.select_level(level):
+		return
+	_audio.play_effect(AudioManager.Effect.BUTTON)
+	_close_levels()
+	if level != _level_index + 1:
+		_load_level(level - 1)
+	else:
+		_refresh()
 
 
 func _load_level(index: int) -> void:
@@ -75,8 +100,7 @@ func _load_level(index: int) -> void:
 	var tubes: Array = level.tubes
 	_rules.start_level(tubes, level.capacity)
 	_level_index = index
-	_level_picker.select(index)
-	_difficulty.text = String(level.difficulty).capitalize()
+	_difficulty.text = "Level %d · %s" % [level.id, String(level.difficulty).capitalize()]
 
 	for old_row in _rows.get_children():
 		_rows.remove_child(old_row)
@@ -118,6 +142,8 @@ func _on_tube_pressed(index: int) -> void:
 		var color: int = _rules.layers_at(_selected).back()
 		var amount := _rules.pour_liquid(_selected, index)
 		if amount > 0:
+			if _rules.is_level_complete():
+				_progress.record_win(_level_index + 1, _rules.move_count())
 			_status.text = "Pouring…"
 			_pour.animate(_tube_views[_selected], _tube_views[index], amount, color)
 			_update_controls()
@@ -156,11 +182,10 @@ func _restart_level() -> void:
 func _advance_level() -> void:
 	if _pour.is_active() or not _rules.is_level_complete():
 		return
-	_audio.play_effect(AudioManager.Effect.BUTTON)
 	if _level_index + 1 < _levels.size():
-		_load_level(_level_index + 1)
+		_choose_level(_level_index + 2)
 	else:
-		_load_level(0)
+		_open_levels()
 
 
 func _clear_selection() -> void:
@@ -174,13 +199,15 @@ func _refresh() -> void:
 		_tube_views[index].show_tube(index, _rules.layers_at(index), _levels[_level_index].capacity,
 			index == _selected)
 	_moves.text = "Moves: %d" % _rules.move_count()
+	_save_status.text = _progress.save_warning
+	_save_status.visible = not _progress.save_warning.is_empty()
 	_update_controls()
 	var was_visible := _victory.visible
 	_status.visible = not complete
 	_victory.visible = complete
 	if complete:
-		_victory_title.text = "Level complete!" if _level_index + 1 < _levels.size() else "Sample levels complete!"
-		_next_level.text = "Next Level" if _level_index + 1 < _levels.size() else "Back to Level 1"
+		_victory_title.text = "Level complete!" if _level_index + 1 < _levels.size() else "All levels complete!"
+		_next_level.text = "Next Level" if _level_index + 1 < _levels.size() else "Level Select"
 		if not was_visible:
 			_reveal_victory()
 
