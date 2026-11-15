@@ -192,7 +192,7 @@ func _test_rules() -> void:
 func _test_levels() -> void:
 	var levels := Catalog.load_core_levels()
 	var started := Time.get_ticks_msec()
-	_check(levels.size() == 500, "Catalog contains 500 levels")
+	_check(levels.size() == 1000, "Catalog contains 1000 levels")
 	_check(Solver.solve([[0, 1, 0, 1], [1, 0, 1, 0]]).status == Solver.Status.UNSOLVABLE,
 		"An exhausted deadlock is distinguished from a search limit")
 	_check(Solver.solve([[0, 1], []], 4, 0).status == Solver.Status.LIMIT_REACHED, "Reports search limit")
@@ -261,24 +261,24 @@ func _test_levels() -> void:
 		_check(rules.is_level_complete(), "Verified solution wins %s" % label)
 	_check(hard_sizes.size() == 3, "The hard campaign uses all three board sizes")
 	_check(hard_colors.size() == 14, "The hard campaign uses all fourteen palette colors")
-	_check(super_hard_count == 50, "Exactly 50 campaign levels are Super Hard")
+	_check(super_hard_count == 100, "Exactly 100 campaign levels are Super Hard")
 	print("Solver verified %d boards in %d ms (max %d expanded states)." %
 		[levels.size(), Time.get_ticks_msec() - started, max_explored])
 
 
 func _test_expanded_campaign(path: String) -> void:
-	var original := Progress.new(200, path)
-	for level in range(1, 201):
+	var original := Progress.new(500, path)
+	for level in range(1, 501):
 		original.record_win(level, 25)
-	original.select_level(200)
+	original.select_level(500)
 	var level_count := Catalog.load_core_levels().size()
 	var expanded := Progress.new(level_count, path)
-	_check(expanded.completed_count() == 200 and expanded.best_moves(200) == original.best_moves(200)
-		and expanded.current_level == 200 and expanded.coins == original.coins,
+	_check(expanded.completed_count() == 500 and expanded.best_moves(500) == original.best_moves(500)
+		and expanded.current_level == 500 and expanded.coins == original.coins,
 		"Expanding the campaign preserves moves, current level, and coins from an existing save")
-	_check(expanded.can_play(201) and not expanded.can_play(202),
-		"Completing the original campaign unlocks level 201")
-	_check(expanded.select_level(201) and Progress.new(level_count, path).current_level == 201,
+	_check(expanded.can_play(501) and not expanded.can_play(502),
+		"Completing the original campaign unlocks level 501")
+	_check(expanded.select_level(501) and Progress.new(level_count, path).current_level == 501,
 		"The first new level can be selected and restored")
 
 
