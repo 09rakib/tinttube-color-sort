@@ -257,6 +257,8 @@ func _build_board(level: Dictionary) -> void:
 	var difficulty := "Mystery" if level.get("mystery", false) else String(level.difficulty).capitalize()
 	if level.get("super_hard", false):
 		difficulty = "Super Hard"
+	elif level.get("extra_hard", false):
+		difficulty = "Extra Super Hard Mystery" if level.mystery else "Extra Super Hard"
 	_level_picker.accessibility_name = "%s · %s · Choose a level" % [heading, difficulty]
 
 	for old_row in _rows.get_children():
@@ -270,8 +272,7 @@ func _build_board(level: Dictionary) -> void:
 	_tube_size = Vector2(82, 204) if column_count <= 3 and row_count <= 2 else Vector2(72, 186)
 	if row_count > 2:
 		_tube_size.y = 166
-	if level.get("super_hard", false):
-		_tube_size.y += 6
+	_tube_size.y += 6 * (level.capacity - Rules.DEFAULT_CAPACITY)
 	var row: HBoxContainer
 	for tube_index in range(tube_count):
 		if tube_index % column_count == 0:
@@ -380,9 +381,15 @@ func _advance_level() -> void:
 func _clear_selection() -> void:
 	_selected = -1
 	_status.text = SELECT_SOURCE
-	if _active_level().get("mystery", false) and _rules.move_count() == 0:
+	if _rules.move_count() != 0:
+		return
+	var level := _active_level()
+	if level.get("extra_hard", false):
+		_status.text = "Match six layers. Pour to reveal a ? layer." if level.mystery \
+			else "Extra Super Hard · Match six layers per glass."
+	elif level.get("mystery", false):
 		_status.text = "Pour the top color to reveal a ? layer."
-	elif _active_level().get("super_hard", false) and _rules.move_count() == 0:
+	elif level.get("super_hard", false):
 		_status.text = "Super Hard · Match five layers per glass."
 
 

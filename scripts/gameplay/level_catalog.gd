@@ -5,6 +5,7 @@ const Rules = preload("res://scripts/gameplay/game_rules.gd")
 const CORE_LEVELS := "res://data/levels/core_levels.json"
 const TubeView = preload("res://scripts/ui/tube.gd")
 const SUPER_HARD_CAPACITY := 5
+const EXTRA_HARD_CAPACITY := 6
 
 
 static func load_core_levels() -> Array[Dictionary]:
@@ -35,7 +36,11 @@ static func _parse_level(raw: Variant) -> Dictionary:
 	var difficulty: Variant = raw.get("difficulty")
 	var raw_tubes: Variant = raw.get("tubes")
 	var super_hard := id % 10 == 7
+	var extra_mystery := id % 20 == 14
+	var extra_hard := extra_mystery or (id >= 13 and id % 10 == 3)
 	var expected_capacity := SUPER_HARD_CAPACITY if super_hard else Rules.DEFAULT_CAPACITY
+	if extra_hard:
+		expected_capacity = EXTRA_HARD_CAPACITY
 	if id <= 0 or capacity != expected_capacity or par_moves <= 0:
 		return {}
 	if not difficulty is String or difficulty.is_empty():
@@ -65,7 +70,8 @@ static func _parse_level(raw: Variant) -> Dictionary:
 	if Rules.is_solved(tubes, capacity):
 		return {}
 	return {"id": id, "difficulty": difficulty, "capacity": capacity, "tubes": tubes,
-		"par_moves": par_moves, "mystery": id % 5 == 0, "super_hard": super_hard}
+		"par_moves": par_moves, "mystery": id % 5 == 0 or extra_mystery,
+		"super_hard": super_hard, "extra_hard": extra_hard}
 
 
 static func _unsigned_integer(value: Variant) -> int:

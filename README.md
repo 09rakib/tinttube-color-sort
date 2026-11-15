@@ -8,7 +8,7 @@ TintTube is an offline-first, portrait color-sort puzzle for Android. The native
 2. Import `project.godot` in the project manager and press **F5** after the first import.
 3. Choose **Play** for the furthest unlocked level or **Continue** to reopen the last selected level. Tap or click a filled tube, then choose an empty tube or one with the same top color and room. Complete a puzzle to unlock the next one. Open **Levels** to see your stars and replay unlocked puzzles.
 
-Levels are stored bottom-to-top in `data/levels/core_levels.json` with a verified par. From level 36 onward, boards have 8, 10, or 12 tubes, with two empty tubes at the start. Every fifth level starts with only the top color visible in each filled tube. Pouring away its visible top reveals the next covered layer. Super Hard levels begin at level 7 and repeat every ten levels through level 997. Each tube holds five layers in those levels. The move counter tracks successful pours in the current attempt, with undone moves removed from the count.
+Levels are stored bottom-to-top in `data/levels/core_levels.json` with a verified par. From level 36 onward, boards have 8, 10, or 12 tubes, with two empty tubes at the start. Every fifth level starts with only the top color visible in each filled tube. Pouring away its visible top reveals the next covered layer. Super Hard levels begin at level 7 and repeat every ten levels through level 997. Each tube holds five layers in those levels. Extra Super Hard levels use six layers. They appear every ten levels starting at level 13, and the six-layer Mystery levels appear every twenty levels starting at level 14. The move counter tracks successful pours in the current attempt, with undone moves removed from the count.
 
 Progress saves automatically when you complete or change levels, buy or equip a cosmetic, or change a setting. It keeps completions, unlocked levels, best move counts, and your wallet. Reopening a level starts a fresh attempt. Versioned progress lives in alternating `user://tinttube-progress.*.json` files, with the previous valid save available if the latest one is damaged.
 
@@ -28,7 +28,7 @@ godot --headless --path . --quit-after 5
 godot --headless --path . --script res://tests/run_core_tests.gd
 ```
 
-The test runner solves and replays all 1,000 boards, validates their recorded move targets, and tests five-layer tubes, mystery reveals, progression, save recovery, and the native gameplay controls. It exits with code 1 if a check fails.
+The test runner solves and replays all 1,000 boards, validates their recorded move targets, and tests five- and six-layer tubes, mystery reveals, progression, save recovery, and the native gameplay controls. It exits with code 1 if a check fails.
 
 ## Android export
 

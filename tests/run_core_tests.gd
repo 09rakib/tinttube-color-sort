@@ -187,6 +187,10 @@ func _test_rules() -> void:
 		"Four matching layers leave a Super Hard tube open")
 	_check(rules.pour_liquid(1, 0) == 1 and Rules.is_tube_complete(rules.layers_at(0), 5)
 		and rules.is_level_complete(), "The fifth matching layer seals the tube and completes the board")
+	rules.start_level([[0, 0, 0, 0, 0], [0], []], 6)
+	_check(not Rules.is_tube_complete(rules.layers_at(0), 6), "Five matching layers leave a six-layer tube open")
+	_check(rules.pour_liquid(1, 0) == 1 and Rules.is_tube_complete(rules.layers_at(0), 6),
+		"The sixth matching layer seals the Extra Super Hard tube")
 
 
 func _test_levels() -> void:
@@ -204,6 +208,8 @@ func _test_levels() -> void:
 	var hard_sizes := {}
 	var hard_colors := {}
 	var super_hard_count := 0
+	var extra_hard_count := 0
+	var extra_mystery_count := 0
 	for level in levels:
 		var label := "Level %d" % level.id
 		var expected_tier := "hard"
@@ -216,10 +222,19 @@ func _test_levels() -> void:
 		elif level.id > 100:
 			expected_tier = "expert"
 		_check(level.difficulty == expected_tier, "%s has the intended difficulty tier" % label)
-		_check(level.mystery == (level.id % 5 == 0), "%s uses the intended reveal rules" % label)
+		var extra_mystery: bool = level.id % 20 == 14
+		var extra_hard: bool = extra_mystery or (level.id >= 13 and level.id % 10 == 3)
+		_check(level.mystery == (level.id % 5 == 0 or extra_mystery), "%s uses the intended reveal rules" % label)
 		var super_hard: bool = level.id % 10 == 7
-		_check(level.super_hard == super_hard and level.capacity == (5 if super_hard else 4),
-			"%s has the correct tube capacity and Super Hard flag" % label)
+		var expected_capacity := 6 if extra_hard else (5 if super_hard else 4)
+		_check(level.super_hard == super_hard and level.extra_hard == extra_hard and level.capacity == expected_capacity,
+			"%s has the correct tube capacity and difficulty flags" % label)
+		if extra_hard:
+			extra_hard_count += 1
+			extra_mystery_count += int(extra_mystery)
+			_check(level.tubes.count([]) == 2 and level.tubes.all(func(tube: Array) -> bool:
+				return tube.is_empty() or (tube.size() == 6 and _inventory([tube]).size() == 6)),
+				"%s starts with six distinct colors per filled tube and two empty tubes" % label)
 		if super_hard:
 			super_hard_count += 1
 			_check(level.tubes.count([]) == 2 and level.tubes.all(func(tube: Array) -> bool:
@@ -244,6 +259,10 @@ func _test_levels() -> void:
 		var rules := Rules.new()
 		_check(rules.start_level(level.tubes, level.capacity, level.mystery), "%s loads" % label)
 		var start := rules.snapshot()
+		if extra_mystery:
+			var first_tube: Array = start[0]
+			_check(first_tube.slice(0, 5).all(func(layer: int) -> bool: return layer < 0)
+				and first_tube[5] >= 0, "%s conceals all five layers below the visible top" % label)
 		_check(not rules.is_level_complete(), "%s begins unsolved" % label)
 		var expected_inventory := _inventory(start)
 		for quantity in expected_inventory.values():
@@ -262,6 +281,8 @@ func _test_levels() -> void:
 	_check(hard_sizes.size() == 3, "The hard campaign uses all three board sizes")
 	_check(hard_colors.size() == 14, "The hard campaign uses all fourteen palette colors")
 	_check(super_hard_count == 100, "Exactly 100 campaign levels are Super Hard")
+	_check(extra_hard_count == 149 and extra_mystery_count == 50,
+		"The campaign includes 99 visible and 50 mystery Extra Super Hard levels")
 	print("Solver verified %d boards in %d ms (max %d expanded states)." %
 		[levels.size(), Time.get_ticks_msec() - started, max_explored])
 

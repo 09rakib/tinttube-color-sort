@@ -18,6 +18,7 @@ var _buttons: Array[Button] = []
 var _pars: Array[int] = []
 var _mystery_levels: Array[bool] = []
 var _super_hard_levels: Array[bool] = []
+var _extra_hard_levels: Array[bool] = []
 var _tile_styles: Dictionary[StringName, StyleBox] = {}
 var _completed_style: StyleBoxFlat
 
@@ -70,6 +71,7 @@ func build(levels: Array[Dictionary]) -> void:
 		_pars.append(level.par_moves)
 		_mystery_levels.append(level.mystery)
 		_super_hard_levels.append(level.super_hard)
+		_extra_hard_levels.append(level.extra_hard)
 
 
 func show_progress(progress: Progress, active_level: int) -> void:
@@ -84,6 +86,8 @@ func show_progress(progress: Progress, active_level: int) -> void:
 		tile.text = "%02d" % level
 		if _mystery_levels[index]:
 			tile.text += " ?"
+		elif _extra_hard_levels[index]:
+			tile.text += " ◆"
 		elif _super_hard_levels[index]:
 			tile.text += " ★"
 		var description := "Available"
@@ -101,6 +105,8 @@ func show_progress(progress: Progress, active_level: int) -> void:
 		tile.accessibility_name = "Level %d · %s" % [level, description]
 		if _mystery_levels[index]:
 			tile.accessibility_name += " · Mystery"
+		if _extra_hard_levels[index]:
+			tile.accessibility_name += " · Extra Super Hard, six layers"
 		elif _super_hard_levels[index]:
 			tile.accessibility_name += " · Super Hard, five layers"
 		tile.tooltip_text = tile.accessibility_name
