@@ -114,7 +114,7 @@ texture_margin_bottom = 26.0
 expand_margin_bottom = 10.0
 modulate_color = Color(0.83, 0.74, 0.96, 0.70)
 
-[sub_resource type="StyleBoxFlat" id="HintCard"]
+[sub_resource type="StyleBoxFlat" id="ModalCard"]
 content_margin_left = 22.0
 content_margin_top = 22.0
 content_margin_right = 22.0
@@ -351,55 +351,6 @@ theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
 theme_override_colors/font_focus_color = Color(1, 1, 1, 1)
 theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
 
-[node name="Victory" type="PanelContainer" parent="SafeArea/Content"]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-size_flags_horizontal = 4
-
-[node name="VictoryContent" type="VBoxContainer" parent="SafeArea/Content/Victory"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="VictoryTitle" type="Label" parent="SafeArea/Content/Victory/VictoryContent"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_type_variation = &"Heading"
-theme_override_colors/font_color = Color(0.06, 0.39, 0.24, 1)
-theme_override_font_sizes/font_size = 22
-horizontal_alignment = 1
-
-[node name="Stars" type="Control" parent="SafeArea/Content/Victory/VictoryContent"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(120, 35)
-layout_mode = 2
-script = ExtResource("8")
-
-[node name="Reward" type="Label" parent="SafeArea/Content/Victory/VictoryContent"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_font_sizes/font_size = 16
-horizontal_alignment = 1
-
-[node name="VictoryActions" type="HBoxContainer" parent="SafeArea/Content/Victory/VictoryContent"]
-layout_mode = 2
-alignment = 1
-theme_override_constants/separation = 10
-
-[node name="NextLevel" type="Button" parent="SafeArea/Content/Victory/VictoryContent/VictoryActions"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(164, 48)
-layout_mode = 2
-mouse_default_cursor_shape = 2
-text = "Next Level"
-
-[node name="Replay" type="Button" parent="SafeArea/Content/Victory/VictoryContent/VictoryActions"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 44)
-layout_mode = 2
-theme_type_variation = &"SecondaryButton"
-text = "Replay"
-
 [node name="LevelSelect" parent="SafeArea" instance=ExtResource("6")]
 unique_name_in_owner = true
 visible = false
@@ -430,6 +381,71 @@ script = ExtResource("4")
 unique_name_in_owner = true
 script = ExtResource("5")
 
+[node name="VictoryOverlay" type="Control" parent="."]
+unique_name_in_owner = true
+visible = false
+z_index = 11
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 0
+
+[node name="Scrim" type="ColorRect" parent="VictoryOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.145, 0.071, 0.255, 0.36)
+
+[node name="Center" type="CenterContainer" parent="VictoryOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="Victory" type="PanelContainer" parent="VictoryOverlay/Center"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(296, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("ModalCard")
+
+[node name="VictoryContent" type="VBoxContainer" parent="VictoryOverlay/Center/Victory"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="VictoryTitle" type="Label" parent="VictoryOverlay/Center/Victory/VictoryContent"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"Heading"
+theme_override_colors/font_color = Color(0.06, 0.39, 0.24, 1)
+theme_override_font_sizes/font_size = 22
+horizontal_alignment = 1
+
+[node name="Stars" type="Control" parent="VictoryOverlay/Center/Victory/VictoryContent"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(120, 35)
+layout_mode = 2
+script = ExtResource("8")
+
+[node name="Reward" type="Label" parent="VictoryOverlay/Center/Victory/VictoryContent"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+horizontal_alignment = 1
+
+[node name="NextLevel" type="Button" parent="VictoryOverlay/Center/Victory/VictoryContent"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(164, 48)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+text = "Next Level"
+theme_override_styles/normal = SubResource("Violet")
+theme_override_styles/hover = SubResource("Violet")
+theme_override_styles/pressed = SubResource("VioletPressed")
+
 [node name="HintDialog" type="Control" parent="."]
 unique_name_in_owner = true
 visible = false
@@ -458,7 +474,7 @@ mouse_filter = 2
 [node name="Card" type="PanelContainer" parent="HintDialog/Center"]
 custom_minimum_size = Vector2(306, 0)
 layout_mode = 2
-theme_override_styles/panel = SubResource("HintCard")
+theme_override_styles/panel = SubResource("ModalCard")
 
 [node name="Contents" type="VBoxContainer" parent="HintDialog/Center/Card"]
 layout_mode = 2

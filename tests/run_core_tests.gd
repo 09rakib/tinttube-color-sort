@@ -422,7 +422,7 @@ func _test_gameplay_scene(path: String) -> void:
 	var rows := board.get_node("%TubeRows")
 	var moves := board.get_node("%Moves") as Label
 	var status := board.get_node("%Status") as Label
-	var victory := board.get_node("%Victory") as PanelContainer
+	var victory := board.get_node("%VictoryOverlay") as Control
 	var level_picker := board.get_node("%Levels") as Button
 	var level_select := board.get_node("%LevelSelect") as Control
 	var groups := level_select.get_node("%DifficultyGroups")
@@ -590,23 +590,11 @@ func _test_gameplay_scene(path: String) -> void:
 		"Victory plays the completion cue")
 	await process_frame
 	await process_frame
-	_click(level_picker)
-	await process_frame
-	await process_frame
-	_check(not level_two.disabled and "Completed in 3 moves" in level_one.tooltip_text,
-		"Victory updates completion and unlocks the next tile")
-	_click(back)
-	await process_frame
-	await process_frame
+	_check(first.get_global_rect() == hit_area, "The victory overlay does not resize or move the board")
+	_check(victory.find_children("*", "Button", true, false).size() == 1,
+		"The victory popup offers a single action")
 	_click(undo)
-	_check(not victory.visible and not first.disabled, "Undo reopens the board after victory")
-	await process_frame
-	await process_frame
-	_click(second)
-	_click(third)
-	await _wait_for_pour(animation)
-	await process_frame
-	await process_frame
+	_check(victory.visible and moves.text == "3", "Input behind the victory popup does not affect the board")
 	_click(board.get_node("%NextLevel") as Button)
 	_check(level_picker.text == "Level 2" and not victory.visible and moves.text == "0",
 		"Next Level loads the next unlocked puzzle")
@@ -627,6 +615,8 @@ func _test_gameplay_scene(path: String) -> void:
 	_click(level_picker)
 	await process_frame
 	await process_frame
+	_check(not level_two.disabled and "Completed in 3 moves" in level_one.tooltip_text,
+		"Victory updates completion and unlocks the next tile")
 	_click(level_one)
 	await process_frame
 	await process_frame

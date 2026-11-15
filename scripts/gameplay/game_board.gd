@@ -28,7 +28,7 @@ const SELECT_SOURCE := "Tap a tube to select its top color."
 @onready var _status: Label = %Status
 @onready var _undo: Button = %Undo
 @onready var _restart: Button = %Restart
-@onready var _victory: PanelContainer = %Victory
+@onready var _victory: Control = %VictoryOverlay
 @onready var _victory_title: Label = %VictoryTitle
 @onready var _next_level: Button = %NextLevel
 @onready var _pour: PourAnimation = %PourAnimation
@@ -101,7 +101,7 @@ func _ready() -> void:
 	_undo.pressed.connect(_undo_move)
 	_restart.pressed.connect(_restart_level)
 	_next_level.pressed.connect(_advance_level)
-	%Replay.pressed.connect(_restart_level)
+	_content.visibility_changed.connect(_sync_victory_visibility)
 	_hint.text = "Hint · %d" % Rewards.HINT_PRICE
 	_hint.pressed.connect(_offer_hint)
 	_hint_confirm.text = "Show hint · %d" % Rewards.HINT_PRICE
@@ -392,11 +392,7 @@ func _refresh(celebrate_completion: bool = false) -> void:
 	if not complete and _victory_tween != null:
 		_victory_tween.kill()
 		_victory_tween = null
-	var tube_size := _tube_size
-	if complete and _rows.get_child_count() > 1:
-		tube_size.y = 132 if _rows.get_child_count() > 2 else 154
 	for index in range(_tube_views.size()):
-		_tube_views[index].custom_minimum_size = tube_size
 		var layers := _rules.layers_at(index)
 		_tube_views[index].show_tube(index, layers, level.capacity, index == _selected, celebrate_completion)
 	_moves.text = str(_rules.move_count())
@@ -406,8 +402,8 @@ func _refresh(celebrate_completion: bool = false) -> void:
 	_save_status.visible = not _progress.save_warning.is_empty()
 	_update_controls()
 	var was_visible := _victory.visible
-	_status.visible = not complete
-	_victory.visible = complete
+	_status.modulate.a = 0.0 if complete else 1.0
+	_sync_victory_visibility()
 	if complete:
 		_stars.show_rating(Rewards.stars(_rules.move_count(), level.par_moves))
 		_reward_label.text = "%d moves" % _rules.move_count()
@@ -419,8 +415,12 @@ func _refresh(celebrate_completion: bool = false) -> void:
 		else:
 			_victory_title.text = "Level complete!" if _level_index + 1 < _levels.size() else "All levels complete!"
 			_next_level.text = "Next Level" if _level_index + 1 < _levels.size() else "Level Select"
-		if not was_visible:
+		if _victory.visible and not was_visible:
 			_reveal_victory()
+
+
+func _sync_victory_visibility() -> void:
+	_victory.visible = _content.is_visible_in_tree() and _rules.is_level_complete()
 
 
 func _update_controls() -> void:
@@ -429,17 +429,18 @@ func _update_controls() -> void:
 	var tubes_disabled := busy or _rules.is_level_complete()
 	for tube in _tube_views:
 		tube.disabled = tubes_disabled
-	_level_picker.disabled = busy
-	_home.disabled = busy
+	_level_picker.disabled = tubes_disabled
+	_home.disabled = tubes_disabled
 	_hint.disabled = tubes_disabled or _hint_move.x >= 0
-	_undo.disabled = busy or count == 0
-	_restart.disabled = busy or (count == 0 and _selected < 0)
+	_undo.disabled = tubes_disabled or count == 0
+	_restart.disabled = tubes_disabled or (count == 0 and _selected < 0)
 
 
 func _reveal_victory() -> void:
 	if _victory_tween != null:
 		_victory_tween.kill()
 	_audio.play_effect(AudioManager.Effect.COMPLETE)
+	_next_level.grab_focus()
 	_victory.modulate.a = 1.0
 	if _progress.settings.reduced_motion:
 		return
