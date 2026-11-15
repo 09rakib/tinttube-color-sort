@@ -4,7 +4,7 @@ Milestone 5 is complete. Gameplay baseline is commit `10280f0` on `main`. TintTu
 
 ## What works
 
-- The campaign has 200 solver-verified puzzles, sequential unlocks, replay, undo, restart, and star ratings. Hard starts at level 36, and Expert starts at level 101. Each board from level 36 onward starts with two empty tubes.
+- The campaign has 500 solver-verified puzzles, sequential unlocks, replay, undo, restart, and star ratings. Hard starts at level 36, and Expert starts at level 101. Each board from level 36 onward starts with two empty tubes. Super Hard levels end in 7 and require five matching layers per tube.
 - Daily Challenge generates and verifies a puzzle from the device’s local date. The first clear earns 40 coins, and replays can improve the best result. Switching to Daily keeps the active campaign attempt in memory.
 - The wallet starts at 100 coins. A first campaign clear earns 20, and the first three-star result for that level earns 10 more. Confirmed hints cost 50 coins once the solver finds a valid move. Shop purchases use game coins.
 - The glass artwork uses translucent rims, reflections, and softly colored animated water. Every fifth level covers the hidden layers with gold `?` markers until a pour exposes them. Optional color names sit below the tubes. Settings also include reduced motion, music, sound effects, and vibration.

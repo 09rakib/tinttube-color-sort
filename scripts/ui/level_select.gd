@@ -17,12 +17,19 @@ const COLUMNS := 5
 var _buttons: Array[Button] = []
 var _pars: Array[int] = []
 var _mystery_levels: Array[bool] = []
+var _super_hard_levels: Array[bool] = []
+var _tile_styles: Dictionary[StringName, StyleBox] = {}
 var _completed_style: StyleBoxFlat
 
 
 func _ready() -> void:
 	_back.pressed.connect(func() -> void: back_requested.emit())
-	_completed_style = get_theme_stylebox("normal", "Button").duplicate() as StyleBoxFlat
+	for state: StringName in [&"normal", &"hover", &"pressed", &"disabled"]:
+		var style := get_theme_stylebox(state, "Button").duplicate() as StyleBox
+		style.set_content_margin(SIDE_LEFT, 7.0)
+		style.set_content_margin(SIDE_RIGHT, 7.0)
+		_tile_styles[state] = style
+	_completed_style = _tile_styles[&"normal"].duplicate() as StyleBoxFlat
 	_completed_style.bg_color = Color("#06756f")
 	_completed_style.shadow_color = Color("#06756f26")
 
@@ -41,6 +48,7 @@ func build(levels: Array[Dictionary]) -> void:
 
 			grid = GridContainer.new()
 			grid.columns = COLUMNS
+			grid.mouse_filter = Control.MOUSE_FILTER_PASS
 			grid.add_theme_constant_override("h_separation", 8)
 			grid.add_theme_constant_override("v_separation", 9)
 			_groups.add_child(grid)
@@ -48,13 +56,18 @@ func build(levels: Array[Dictionary]) -> void:
 		var tile := Button.new()
 		tile.custom_minimum_size = Vector2(0, 58)
 		tile.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		# Let the scroll container turn a touch on the button into a swipe.
+		tile.mouse_filter = Control.MOUSE_FILTER_PASS
 		tile.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 		tile.add_theme_font_size_override("font_size", 16)
+		for state in _tile_styles:
+			tile.add_theme_stylebox_override(state, _tile_styles[state])
 		tile.pressed.connect(level_selected.emit.bind(int(level.id)))
 		grid.add_child(tile)
 		_buttons.append(tile)
 		_pars.append(level.par_moves)
 		_mystery_levels.append(level.mystery)
+		_super_hard_levels.append(level.super_hard)
 
 
 func show_progress(progress: Progress, active_level: int) -> void:
@@ -69,6 +82,8 @@ func show_progress(progress: Progress, active_level: int) -> void:
 		tile.text = "%02d" % level
 		if _mystery_levels[index]:
 			tile.text += " ?"
+		elif _super_hard_levels[index]:
+			tile.text += " ★"
 		var description := "Available"
 		if tile.disabled:
 			description = "Locked"
@@ -84,6 +99,8 @@ func show_progress(progress: Progress, active_level: int) -> void:
 		tile.accessibility_name = "Level %d · %s" % [level, description]
 		if _mystery_levels[index]:
 			tile.accessibility_name += " · Mystery"
+		elif _super_hard_levels[index]:
+			tile.accessibility_name += " · Super Hard, five layers"
 		tile.tooltip_text = tile.accessibility_name
 	show()
 	_scroll.ensure_control_visible.call_deferred(_buttons[active_level - 1])

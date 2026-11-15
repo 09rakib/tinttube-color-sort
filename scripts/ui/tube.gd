@@ -1,14 +1,20 @@
 extends Button
 ## Keeps the button hit area fixed while drawing the animated glass and liquid.
 
+signal seal_landed
+
+const Rules = preload("res://scripts/gameplay/game_rules.gd")
 const LIQUIDS := [
 	Color("#9a4af4"), Color("#00c7b8"), Color("#ff526e"), Color("#ffbf10"),
 	Color("#43a9f3"), Color("#ed66be"),
 	Color("#ef7336"), Color("#77b72d"), Color("#3150a4"), Color("#875039"),
+	Color("#f2e6c7"), Color("#30333b"), Color("#15674b"), Color("#bd287b"),
 ]
 const COLOR_NAMES := ["lavender", "mint", "coral", "amber", "blue", "pink",
-	"orange", "lime", "navy", "brown"]
+	"orange", "lime", "navy", "brown", "ivory", "charcoal", "forest", "magenta"]
 const CONCEALED_TINT := Color("#ca912d")
+const CELEBRATION_GOLD := Color("#ffc553")
+const CELEBRATION_VIOLET := Color("#b270f5")
 const LIFT := Vector2(0, -9)
 const SURFACE_STEPS := 12
 const HEADSPACE := 12.0
@@ -27,9 +33,14 @@ var _surface_clock := 0.0
 var _phase_offset := 0.0
 var _rim_color := Color("#85c6cf")
 var _hint_color := Color.TRANSPARENT
+var _hint_destination := false
 var _color_labels := false
 var _reduced_motion := false
 var _top_color_name := "Empty"
+var _sealed := false
+var _seal_animation: Tween
+var _cap_drop := 1.0
+var _burst := 1.0
 
 
 func _ready() -> void:
@@ -45,15 +56,27 @@ func _process(delta: float) -> void:
 		queue_redraw()
 
 
-func show_tube(index: int, layers: Array, capacity: int, selected: bool) -> void:
+func show_tube(index: int, layers: Array, capacity: int, selected: bool,
+		celebrate_completion: bool = false) -> void:
 	_layers = layers
 	_capacity = capacity
 	_phase_offset = index * 0.85
+	var sealed := Rules.is_tube_complete(layers, capacity)
+	if sealed != _sealed:
+		_sealed = sealed
+		_stop_seal_animation()
+		if sealed and celebrate_completion:
+			if _reduced_motion:
+				seal_landed.emit()
+			else:
+				_animate_seal()
 	_update_surface_motion()
 	if selected != _selected:
 		_selected = selected
 		_animate_selection()
 	var description := "empty" if layers.is_empty() else "%d of %d layers" % [layers.size(), capacity]
+	if _sealed:
+		description += " · sealed"
 	tooltip_text = "Tube %d · %s" % [index + 1, description]
 	accessibility_name = tooltip_text
 	_top_color_name = "Empty"
@@ -65,6 +88,8 @@ func show_tube(index: int, layers: Array, capacity: int, selected: bool) -> void
 		accessibility_name += " · Bottom to top: %s" % ", ".join(color_names)
 	if selected:
 		accessibility_name += " · selected"
+	if _hint_color.a > 0.0:
+		accessibility_name += " · hint destination" if _hint_destination else " · hint source"
 	queue_redraw()
 
 
@@ -77,8 +102,9 @@ func set_rim_color(color: Color) -> void:
 	queue_redraw()
 
 
-func set_hint_color(color: Color) -> void:
+func set_hint_color(color: Color, destination: bool = false) -> void:
 	_hint_color = color
+	_hint_destination = destination
 	queue_redraw()
 
 
@@ -88,6 +114,7 @@ func apply_accessibility(color_labels: bool, reduced_motion: bool) -> void:
 	if _reduced_motion:
 		stop_feedback()
 		set_pose(Vector2.ZERO)
+		_stop_seal_animation()
 	_update_surface_motion()
 	queue_redraw()
 
@@ -156,6 +183,32 @@ func _set_offset(offset: Vector2) -> void:
 	set_pose(offset)
 
 
+func _animate_seal() -> void:
+	_cap_drop = 0.0
+	_seal_animation = create_tween()
+	_seal_animation.tween_method(_set_cap_drop, 0.0, 1.0, 0.23).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	_seal_animation.tween_callback(func() -> void: seal_landed.emit())
+	_seal_animation.tween_method(_set_burst, 0.0, 1.0, 0.92)
+
+
+func _stop_seal_animation() -> void:
+	if _seal_animation != null:
+		_seal_animation.kill()
+		_seal_animation = null
+	_cap_drop = 1.0
+	_burst = 1.0
+
+
+func _set_cap_drop(progress: float) -> void:
+	_cap_drop = progress
+	queue_redraw()
+
+
+func _set_burst(progress: float) -> void:
+	_burst = progress
+	queue_redraw()
+
+
 func _mouth() -> Vector2:
 	return Vector2(size.x / 2.0, 13.5)
 
@@ -189,10 +242,89 @@ func _draw() -> void:
 		Color("#ffffffbe"), 1.4, true)
 
 	_draw_glass_rim(body.size.x / 2.0 + 4.0)
+	if _sealed and is_zero_approx(pose_angle) and is_zero_approx(_liquid_delta):
+		var cap_tint := liquid_tint(_layers.back()).lerp(Color("#d9c9f2"), 0.30)
+		_draw_cap(body.size.x / 2.0 + 4.0, cap_tint)
+		if _burst < 1.0:
+			_draw_seal_burst(cap_tint)
+	if _hint_color.a > 0.0:
+		_draw_hint_marker()
 	if _color_labels:
 		draw_set_transform(Vector2.ZERO)
 		draw_string(get_theme_font("font", "Label"), Vector2(0.0, size.y - 1.0), _top_color_name,
 			HORIZONTAL_ALIGNMENT_CENTER, size.x, 13, Color("#33294c"))
+
+
+func _draw_cap(radius: float, tint: Color) -> void:
+	var top := lerpf(-40.0, -7.0, _cap_drop)
+	var bottom := top + 8.0
+	var edge := tint.darkened(0.30)
+	var highlight := tint.lightened(0.56)
+	_draw_rim_ellipse(Vector2(0.0, bottom), Vector2(radius, 5.4), tint, edge, highlight)
+	draw_rect(Rect2(-radius, top, radius * 2.0, bottom - top), tint)
+	for index in range(1, 12):
+		var x := lerpf(-radius, radius, float(index) / 12.0)
+		var curvature := sqrt(maxf(0.0, 1.0 - pow(x / radius, 2.0)))
+		draw_line(Vector2(x, top + 1.0), Vector2(x, bottom + curvature * 4.0 - 1.0), edge, 1.1, true)
+	_draw_rim_ellipse(Vector2(0.0, top), Vector2(radius, 5.4), highlight, tint, Color("#fff9f1"))
+
+
+func _draw_hint_marker() -> void:
+	var center := Vector2(0.0, -15.0)
+	var fill := Color("#106f59") if _hint_destination else Color("#965900")
+	var direction := 1.0 if _hint_destination else -1.0
+	var tip := center + Vector2(0.0, 4.5 * direction)
+	draw_circle(center, 9.0, fill, true, -1.0, true)
+	draw_arc(center, 8.7, 0.0, TAU, 24, Color.WHITE, 1.25, true)
+	draw_line(center - Vector2(0.0, 4.5 * direction), tip, Color.WHITE, 1.8, true)
+	draw_polyline(PackedVector2Array([tip + Vector2(-3.6, -3.6 * direction), tip,
+		tip + Vector2(3.6, -3.6 * direction)]), Color.WHITE, 1.8, true)
+
+
+func _draw_seal_burst(tint: Color) -> void:
+	var origin := Vector2(0.0, -7.0)
+	var spread := 1.0 - pow(1.0 - _burst, 2.6)
+	var fade := 1.0 - smoothstep(0.32, 1.0, _burst)
+	var flash := 1.0 - smoothstep(0.0, 0.46, _burst)
+	for ring in range(1, 5):
+		draw_circle(origin, (8.0 + spread * 16.0) * ring * 0.36,
+			Color("#ffe4a1", flash * 0.10), true, -1.0, true)
+	draw_arc(origin, 9.0 + spread * 41.0, 0.0, TAU, 36, Color(CELEBRATION_GOLD, flash), 2.2, true)
+	draw_arc(origin, 6.0 + spread * 30.0, 0.0, TAU, 32, Color(Color.WHITE, flash), 1.4, true)
+
+	for index in range(10):
+		var angle := -PI + PI * float(index) / 9.0
+		var ray := Vector2.from_angle(angle)
+		var reach := 22.0 + 5.0 * (index % 3)
+		var tip := origin + ray * (17.0 + reach * spread)
+		draw_line(tip - ray * 11.0, tip, Color(CELEBRATION_GOLD, flash), 1.8, true)
+
+	var colors := [CELEBRATION_GOLD, tint.lightened(0.15), CELEBRATION_VIOLET, Color.WHITE]
+	for index in range(24):
+		var angle := TAU * float(index) / 24.0
+		var direction := Vector2.from_angle(angle)
+		var reach := 24.0 + 8.0 * (index % 5)
+		var point := origin + direction * (9.0 + reach * spread)
+		point.y += (24.0 * _burst * _burst - 16.0 * spread)
+		var spark := Color(colors[index % colors.size()], fade)
+		if index % 4 == 0:
+			_draw_seal_star(point, 4.5 + float(index % 3), spark)
+		elif index % 3 == 0:
+			draw_circle(point, 2.2, spark, true, -1.0, true)
+		else:
+			var axis := direction.rotated(_burst * 5.0)
+			var side := axis.orthogonal()
+			draw_colored_polygon(PackedVector2Array([point - axis * 3.5, point + side * 1.8,
+				point + axis * 3.5, point - side * 1.8]), spark)
+
+
+func _draw_seal_star(center: Vector2, radius: float, tint: Color) -> void:
+	var points := PackedVector2Array()
+	for index in range(8):
+		var reach := radius if index % 2 == 0 else radius * 0.30
+		points.append(center + Vector2.from_angle(PI * index / 4.0) * reach)
+	draw_colored_polygon(points, tint)
+	draw_circle(center, 1.4, Color(Color.WHITE, tint.a), true, -1.0, true)
 
 
 func _draw_glass_body(body: Rect2) -> void:

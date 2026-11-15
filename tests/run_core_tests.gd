@@ -182,11 +182,17 @@ func _test_rules() -> void:
 	rules.restart_level()
 	_check(rules.snapshot() == hidden, "Restart restores all original mystery covers")
 
+	rules.start_level([[0, 0, 0, 0], [0], []], 5)
+	_check(not Rules.is_tube_complete(rules.layers_at(0), 5) and not rules.is_level_complete(),
+		"Four matching layers leave a Super Hard tube open")
+	_check(rules.pour_liquid(1, 0) == 1 and Rules.is_tube_complete(rules.layers_at(0), 5)
+		and rules.is_level_complete(), "The fifth matching layer seals the tube and completes the board")
+
 
 func _test_levels() -> void:
 	var levels := Catalog.load_core_levels()
 	var started := Time.get_ticks_msec()
-	_check(levels.size() == 200, "Catalog contains 200 levels")
+	_check(levels.size() == 500, "Catalog contains 500 levels")
 	_check(Solver.solve([[0, 1, 0, 1], [1, 0, 1, 0]]).status == Solver.Status.UNSOLVABLE,
 		"An exhausted deadlock is distinguished from a search limit")
 	_check(Solver.solve([[0, 1], []], 4, 0).status == Solver.Status.LIMIT_REACHED, "Reports search limit")
@@ -196,6 +202,8 @@ func _test_levels() -> void:
 
 	var max_explored := 0
 	var hard_sizes := {}
+	var hard_colors := {}
+	var super_hard_count := 0
 	for level in levels:
 		var label := "Level %d" % level.id
 		var expected_tier := "hard"
@@ -209,19 +217,37 @@ func _test_levels() -> void:
 			expected_tier = "expert"
 		_check(level.difficulty == expected_tier, "%s has the intended difficulty tier" % label)
 		_check(level.mystery == (level.id % 5 == 0), "%s uses the intended reveal rules" % label)
+		var super_hard: bool = level.id % 10 == 7
+		_check(level.super_hard == super_hard and level.capacity == (5 if super_hard else 4),
+			"%s has the correct tube capacity and Super Hard flag" % label)
+		if super_hard:
+			super_hard_count += 1
+			_check(level.tubes.count([]) == 2 and level.tubes.all(func(tube: Array) -> bool:
+				return tube.is_empty() or (tube.size() == 5 and _inventory([tube]).size() == 5)),
+				"%s starts with five distinct colors per filled tube and two empty tubes" % label)
 		if level.id >= 36:
 			var tube_count: int = level.tubes.size()
 			hard_sizes[tube_count] = true
 			_check(tube_count in [8, 10, 12] and level.tubes.count([]) == 2
 				and _inventory(level.tubes).size() == tube_count - 2,
 				"%s has the requested tube count and two empty tubes" % label)
+			var top_colors := {}
+			for tube: Array in level.tubes:
+				if tube.is_empty():
+					continue
+				var colors := _inventory([tube])
+				_check(colors.size() == level.capacity, "%s separates every color within a tube" % label)
+				top_colors[tube.back()] = true
+				hard_colors.merge(colors)
+			_check(top_colors.size() == tube_count - 2,
+				"%s starts with a different top color in every filled tube" % label)
 		var rules := Rules.new()
 		_check(rules.start_level(level.tubes, level.capacity, level.mystery), "%s loads" % label)
 		var start := rules.snapshot()
 		_check(not rules.is_level_complete(), "%s begins unsolved" % label)
 		var expected_inventory := _inventory(start)
 		for quantity in expected_inventory.values():
-			_check(quantity == level.capacity, "%s has four layers of each color" % label)
+			_check(quantity == level.capacity, "%s has one full tube's worth of each color" % label)
 		var solution := Solver.solve(start, level.capacity)
 		max_explored = maxi(max_explored, solution.explored)
 		_check(solution.status == Solver.Status.SOLVED and solution.moves.size() == level.par_moves,
@@ -234,23 +260,26 @@ func _test_levels() -> void:
 			_check(Rules.is_valid_layout(board, level.capacity, true), "%s respects capacity" % label)
 		_check(rules.is_level_complete(), "Verified solution wins %s" % label)
 	_check(hard_sizes.size() == 3, "The hard campaign uses all three board sizes")
+	_check(hard_colors.size() == 14, "The hard campaign uses all fourteen palette colors")
+	_check(super_hard_count == 50, "Exactly 50 campaign levels are Super Hard")
 	print("Solver verified %d boards in %d ms (max %d expanded states)." %
 		[levels.size(), Time.get_ticks_msec() - started, max_explored])
 
 
 func _test_expanded_campaign(path: String) -> void:
-	var original := Progress.new(50, path)
-	for level in range(1, 51):
+	var original := Progress.new(200, path)
+	for level in range(1, 201):
 		original.record_win(level, 25)
-	original.select_level(50)
-	var expanded := Progress.new(Catalog.load_core_levels().size(), path)
-	_check(expanded.completed_count() == 50 and expanded.best_moves(50) == original.best_moves(50)
-		and expanded.current_level == 50 and expanded.coins == original.coins,
+	original.select_level(200)
+	var level_count := Catalog.load_core_levels().size()
+	var expanded := Progress.new(level_count, path)
+	_check(expanded.completed_count() == 200 and expanded.best_moves(200) == original.best_moves(200)
+		and expanded.current_level == 200 and expanded.coins == original.coins,
 		"Expanding the campaign preserves moves, current level, and coins from an existing save")
-	_check(expanded.can_play(51) and not expanded.can_play(52),
-		"Completing the original campaign unlocks the first Hard level")
-	_check(expanded.select_level(51) and Progress.new(100, path).current_level == 51,
-		"The first Hard level can be selected and restored")
+	_check(expanded.can_play(201) and not expanded.can_play(202),
+		"Completing the original campaign unlocks level 201")
+	_check(expanded.select_level(201) and Progress.new(level_count, path).current_level == 201,
+		"The first new level can be selected and restored")
 
 
 func _test_progress(path: String) -> void:
@@ -406,11 +435,39 @@ func _test_gameplay_scene(path: String) -> void:
 	var stream := animation.get_node("Stream") as Control
 	var audio := board.get_node("%Audio")
 	_check(rows.get_child_count() == 1 and level_picker.text == "Level 1", "Native board loads Level 1")
+	_check(board.get_node_or_null("%GoalStatus") == null and board.get_node("%Home").visible,
+		"The compact header keeps Home and gives the progress panel's space to the tubes")
 	_click(level_picker)
 	await process_frame
 	await process_frame
 	_check(level_select.visible and groups.get_child_count() == 10, "Level selection shows five tier grids")
 	_check(not level_one.disabled and level_two.disabled, "Only Level 1 starts unlocked in the grid")
+	var scroll := level_select.get_node("%Scroll") as ScrollContainer
+	# Godot 4.7.2 uses emulated mouse events for native touchscreen scrolling.
+	var emulate_touch := Input.emulate_touch_from_mouse
+	Input.emulate_touch_from_mouse = true
+	var hover := InputEventMouseMotion.new()
+	hover.position = level_one.get_global_rect().get_center()
+	root.push_input(hover, true)
+	var touch := InputEventMouseButton.new()
+	touch.position = hover.position
+	touch.button_index = MOUSE_BUTTON_LEFT
+	touch.pressed = true
+	root.push_input(touch, true)
+	var drag := InputEventMouseMotion.new()
+	drag.button_mask = MOUSE_BUTTON_MASK_LEFT
+	drag.relative = Vector2(0.0, -72.0)
+	drag.position = touch.position + drag.relative
+	root.push_input(drag, true)
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.position = drag.position
+	root.push_input(release, true)
+	Input.emulate_touch_from_mouse = emulate_touch
+	_check(scroll.scroll_vertical > 0 and level_select.visible,
+		"Swiping over a level tile scrolls the list without selecting the tile")
+	scroll.scroll_vertical = 0
+	await process_frame
 	_click(level_two)
 	_check(level_select.visible, "Tapping a locked tile stays on level selection")
 	_click(back)
@@ -426,14 +483,20 @@ func _test_gameplay_scene(path: String) -> void:
 	var third := first_row.get_child(2) as Button
 	var hint := board.get_node("%Hint") as Button
 	_click(hint)
-	var prompt := board.get("_hint_dialog") as ConfirmationDialog
+	var prompt := board.get_node("%HintDialog") as Control
+	var show_hint := board.get_node("%HintConfirm") as Button
 	var progress = board.get("_progress")
 	_check(prompt.visible and progress.coins == 100, "Opening the confirmation leaves the wallet untouched")
-	prompt.hide()
-	prompt.confirmed.emit()
+	await process_frame
+	_click(board.get_node("%HintCancel") as Button)
+	_check(not prompt.visible and progress.coins == 100, "Cancel closes the hint without a charge")
+	_click(hint)
+	await process_frame
+	_click(show_hint)
 	await process_frame
 	await process_frame
-	_check(progress.coins == 50 and hint.disabled and status.text == "Pour from tube 1 into tube 3.",
+	_check(not prompt.visible and progress.coins == 50 and hint.disabled
+		and status.text == "Pour from tube 1 into tube 3.",
 		"An accepted hint charges once and points to a legal move")
 
 	_click(third)
@@ -495,6 +558,7 @@ func _test_gameplay_scene(path: String) -> void:
 	_check(moves.text == "1" and not animation.is_active() and not stream.visible
 		and not first.disabled, "Backgrounding settles the committed move exactly once")
 	_check(not pour_sound.playing, "Backgrounding stops the interrupted pouring cue")
+	board.notification(Node.NOTIFICATION_APPLICATION_RESUMED)
 	_check(first.get("pose_offset") == Vector2.ZERO and first.get("pose_angle") == 0.0,
 		"Interrupted animation resets the source pose")
 	_click(restart)
@@ -503,7 +567,17 @@ func _test_gameplay_scene(path: String) -> void:
 		_click(first_row.get_child(move.x) as Button)
 		_click(first_row.get_child(move.y) as Button)
 		await _wait_for_pour(animation)
+		if move == FIRST_SOLUTION[1]:
+			_check(first.get("_sealed") and float(first.get("_cap_drop")) < 1.0,
+				"A newly completed tube starts its falling cap after the pour")
+			var seal_sound := audio.get_child(AudioManager.Effect.SEAL) as AudioStreamPlayer
+			_check(not seal_sound.playing, "The seal cue waits for the cap to land")
+			await create_timer(0.29).timeout
+			_check(seal_sound.playing and float(first.get("_burst")) < 1.0,
+				"The cap landing plays the short cue with the celebration")
 	_check(victory.visible and moves.text == "3" and first.disabled, "A win locks pours and shows victory")
+	_check(first.get("_sealed") and third.get("_sealed") and not second.get("_sealed"),
+		"Only the full single-color tubes are sealed at victory")
 	_check((audio.get_child(AudioManager.Effect.COMPLETE) as AudioStreamPlayer).playing,
 		"Victory plays the completion cue")
 	await process_frame

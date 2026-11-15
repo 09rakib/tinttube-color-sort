@@ -28,7 +28,7 @@ class Search:
 			return
 		_boards.append(tubes)
 		_visited[_key(tubes)] = true
-		_prioritize = tubes.size() >= 8 or tubes.any(func(tube: Array) -> bool:
+		_prioritize = capacity > Rules.DEFAULT_CAPACITY or tubes.size() >= 8 or tubes.any(func(tube: Array) -> bool:
 			return not tube.is_empty() and tube.front() < 0)
 		if _prioritize:
 			_frontier.append(0)

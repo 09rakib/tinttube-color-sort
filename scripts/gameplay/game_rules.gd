@@ -74,13 +74,15 @@ static func is_solved(tubes: Array, capacity: int) -> bool:
 	for tube in tubes:
 		if tube.is_empty():
 			continue
-		if tube.size() != capacity:
+		if not is_tube_complete(tube, capacity):
 			return false
-		for layer in tube:
-			if layer != tube.front():
-				return false
 		has_filled_tube = true
 	return has_filled_tube
+
+
+static func is_tube_complete(layers: Array, capacity: int) -> bool:
+	return not layers.is_empty() and layers.size() == capacity and layers[0] >= 0 \
+		and layers.count(layers[0]) == capacity
 
 
 func get_valid_moves() -> Array[Vector2i]:

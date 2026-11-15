@@ -1,4 +1,4 @@
-[gd_scene load_steps=23 format=3]
+[gd_scene load_steps=22 format=3]
 
 [ext_resource type="Script" path="res://scripts/gameplay/game_board.gd" id="1"]
 [ext_resource type="Theme" path="res://assets/theme/tinttube.tres" id="2"]
@@ -114,29 +114,24 @@ texture_margin_bottom = 26.0
 expand_margin_bottom = 10.0
 modulate_color = Color(0.83, 0.74, 0.96, 0.70)
 
-[sub_resource type="StyleBoxFlat" id="ProgressTrack"]
-bg_color = Color(0.68, 0.60, 0.91, 1)
-border_color = Color(0.94, 0.89, 1, 1)
+[sub_resource type="StyleBoxFlat" id="HintCard"]
+content_margin_left = 22.0
+content_margin_top = 22.0
+content_margin_right = 22.0
+content_margin_bottom = 22.0
+bg_color = Color(0.975, 0.946, 1, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-corner_radius_top_left = 7
-corner_radius_top_right = 7
-corner_radius_bottom_left = 7
-corner_radius_bottom_right = 7
-
-[sub_resource type="StyleBoxFlat" id="ProgressFill"]
-bg_color = Color(0.59, 0.24, 0.90, 1)
-border_color = Color(0.83, 0.59, 1, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-corner_radius_top_left = 7
-corner_radius_top_right = 7
-corner_radius_bottom_left = 7
-corner_radius_bottom_right = 7
+border_color = Color(0.92, 0.76, 0.45, 1)
+corner_radius_top_left = 28
+corner_radius_top_right = 28
+corner_radius_bottom_right = 28
+corner_radius_bottom_left = 28
+shadow_color = Color(0.18, 0.08, 0.34, 0.52)
+shadow_size = 18
+shadow_offset = Vector2(0, 7)
 
 [node name="GameBoard" type="Control"]
 layout_mode = 3
@@ -179,6 +174,24 @@ theme_override_constants/separation = 14
 [node name="Header" type="HBoxContainer" parent="SafeArea/Content"]
 layout_mode = 2
 theme_override_constants/separation = 6
+
+[node name="Home" type="Button" parent="SafeArea/Content/Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(44, 42)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+tooltip_text = "Home"
+accessibility_name = "Home"
+theme_override_font_sizes/font_size = 26
+text = "‹"
+theme_override_styles/normal = SubResource("Pearl")
+theme_override_styles/hover = SubResource("Pearl")
+theme_override_styles/pressed = SubResource("PearlPressed")
+theme_override_styles/disabled = SubResource("PearlDisabled")
+theme_override_colors/font_color = Color(0.30, 0.12, 0.53, 1)
+theme_override_colors/font_hover_color = Color(0.30, 0.12, 0.53, 1)
+theme_override_colors/font_focus_color = Color(0.30, 0.12, 0.53, 1)
+theme_override_colors/font_pressed_color = Color(0.30, 0.12, 0.53, 1)
 
 [node name="LevelSlot" type="MarginContainer" parent="SafeArea/Content/Header"]
 layout_mode = 2
@@ -259,54 +272,6 @@ theme_type_variation = &"Heading"
 theme_override_colors/font_color = Color(0.45, 0.23, 0.06, 1)
 theme_override_font_sizes/font_size = 15
 tooltip_text = "Coins"
-
-[node name="GoalRow" type="HBoxContainer" parent="SafeArea/Content"]
-layout_mode = 2
-theme_override_constants/separation = 9
-
-[node name="Home" type="Button" parent="SafeArea/Content/GoalRow"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(44, 42)
-layout_mode = 2
-mouse_default_cursor_shape = 2
-tooltip_text = "Home"
-accessibility_name = "Home"
-theme_override_font_sizes/font_size = 26
-text = "‹"
-theme_override_styles/normal = SubResource("Pearl")
-theme_override_styles/hover = SubResource("Pearl")
-theme_override_styles/pressed = SubResource("PearlPressed")
-theme_override_styles/disabled = SubResource("PearlDisabled")
-theme_override_colors/font_color = Color(0.30, 0.12, 0.53, 1)
-theme_override_colors/font_hover_color = Color(0.30, 0.12, 0.53, 1)
-theme_override_colors/font_focus_color = Color(0.30, 0.12, 0.53, 1)
-theme_override_colors/font_pressed_color = Color(0.30, 0.12, 0.53, 1)
-
-[node name="GoalGlass" type="PanelContainer" parent="SafeArea/Content/GoalRow"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_styles/panel = SubResource("Pearl")
-
-[node name="GoalContent" type="VBoxContainer" parent="SafeArea/Content/GoalRow/GoalGlass"]
-layout_mode = 2
-theme_override_constants/separation = 1
-
-[node name="GoalStatus" type="Label" parent="SafeArea/Content/GoalRow/GoalGlass/GoalContent"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_type_variation = &"Heading"
-theme_override_colors/font_color = Color(0.32, 0.12, 0.55, 1)
-theme_override_font_sizes/font_size = 14
-horizontal_alignment = 1
-
-[node name="GoalProgress" type="ProgressBar" parent="SafeArea/Content/GoalRow/GoalGlass/GoalContent"]
-unique_name_in_owner = true
-layout_mode = 2
-mouse_filter = 2
-custom_minimum_size = Vector2(0, 12)
-show_percentage = false
-theme_override_styles/background = SubResource("ProgressTrack")
-theme_override_styles/fill = SubResource("ProgressFill")
 
 [node name="PlayArea" type="CenterContainer" parent="SafeArea/Content"]
 layout_mode = 2
@@ -464,3 +429,90 @@ script = ExtResource("4")
 [node name="Audio" type="Node" parent="."]
 unique_name_in_owner = true
 script = ExtResource("5")
+
+[node name="HintDialog" type="Control" parent="."]
+unique_name_in_owner = true
+visible = false
+z_index = 12
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 0
+
+[node name="Scrim" type="ColorRect" parent="HintDialog"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.145, 0.071, 0.255, 0.62)
+
+[node name="Center" type="CenterContainer" parent="HintDialog"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="Card" type="PanelContainer" parent="HintDialog/Center"]
+custom_minimum_size = Vector2(306, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("HintCard")
+
+[node name="Contents" type="VBoxContainer" parent="HintDialog/Center/Card"]
+layout_mode = 2
+theme_override_constants/separation = 9
+
+[node name="Coin" type="TextureRect" parent="HintDialog/Center/Card/Contents"]
+custom_minimum_size = Vector2(44, 44)
+layout_mode = 2
+size_flags_horizontal = 4
+mouse_filter = 2
+texture = ExtResource("13")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Title" type="Label" parent="HintDialog/Center/Card/Contents"]
+layout_mode = 2
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(0.27, 0.11, 0.48, 1)
+text = "Show a hint?"
+horizontal_alignment = 1
+
+[node name="Description" type="Label" parent="HintDialog/Center/Card/Contents"]
+layout_mode = 2
+text = "Reveal which two tubes to use next."
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="HintBalance" type="Label" parent="HintDialog/Center/Card/Contents"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"Heading"
+theme_override_colors/font_color = Color(0.44, 0.27, 0.11, 1)
+horizontal_alignment = 1
+
+[node name="Actions" type="HBoxContainer" parent="HintDialog/Center/Card/Contents"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 10
+
+[node name="HintCancel" type="Button" parent="HintDialog/Center/Card/Contents/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(82, 46)
+layout_mode = 2
+theme_type_variation = &"SecondaryButton"
+mouse_default_cursor_shape = 2
+text = "Cancel"
+
+[node name="HintConfirm" type="Button" parent="HintDialog/Center/Card/Contents/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(144, 46)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+text = "Show hint"
+theme_override_styles/normal = SubResource("Violet")
+theme_override_styles/hover = SubResource("Violet")
+theme_override_styles/pressed = SubResource("VioletPressed")

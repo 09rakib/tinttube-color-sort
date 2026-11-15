@@ -24,8 +24,6 @@ const SELECT_SOURCE := "Tap a tube to select its top color."
 @onready var _level_select: LevelSelect = %LevelSelect
 @onready var _save_status: Label = %SaveStatus
 @onready var _moves: Label = %Moves
-@onready var _goal_status: Label = %GoalStatus
-@onready var _goal_progress: ProgressBar = %GoalProgress
 @onready var _rows: VBoxContainer = %TubeRows
 @onready var _status: Label = %Status
 @onready var _undo: Button = %Undo
@@ -39,6 +37,10 @@ const SELECT_SOURCE := "Tap a tube to select its top color."
 @onready var _home: Button = %Home
 @onready var _wallet: Label = %Wallet
 @onready var _hint: Button = %Hint
+@onready var _hint_dialog: Control = %HintDialog
+@onready var _hint_confirm: Button = %HintConfirm
+@onready var _hint_cancel: Button = %HintCancel
+@onready var _hint_balance: Label = %HintBalance
 @onready var _stars: StarRating = %Stars
 @onready var _reward_label: Label = %Reward
 @onready var _background: ColorRect = $Background
@@ -49,12 +51,11 @@ var progress_path := Progress.DEFAULT_PATH
 var _progress: Progress
 var _levels: Array[Dictionary] = []
 var _tube_views: Array[TubeView] = []
-var _tube_size := Vector2(72, 172)
+var _tube_size := Vector2(72, 186)
 var _level_index := 0
 var _selected := -1
 var _victory_tween: Tween
 var _levels_from_home := false
-var _hint_dialog: ConfirmationDialog
 var _searching := false
 var _hint_move := Vector2i(-1, -1)
 var _last_reward := 0
@@ -104,12 +105,9 @@ func _ready() -> void:
 	%Replay.pressed.connect(_restart_level)
 	_hint.text = "Hint · %d" % Rewards.HINT_PRICE
 	_hint.pressed.connect(_offer_hint)
-	_hint_dialog = ConfirmationDialog.new()
-	_hint_dialog.title = "Show a hint?"
-	_hint_dialog.dialog_text = "Reveal the next move for %d coins." % Rewards.HINT_PRICE
-	_hint_dialog.ok_button_text = "Show hint"
-	_hint_dialog.confirmed.connect(_find_hint)
-	add_child(_hint_dialog)
+	_hint_confirm.text = "Show hint · %d" % Rewards.HINT_PRICE
+	_hint_confirm.pressed.connect(_find_hint)
+	_hint_cancel.pressed.connect(_close_hint_dialog)
 	_load_level(_progress.current_level - 1)
 	if start_at_home:
 		_open_home()
@@ -119,14 +117,14 @@ func _notification(what: int) -> void:
 	if not is_node_ready():
 		return
 	if what == NOTIFICATION_APPLICATION_PAUSED:
+		_audio.set_backgrounded(true)
 		_pour.settle()
 		_audio.stop_effects()
-		_audio.set_backgrounded(true)
 	elif what == NOTIFICATION_APPLICATION_RESUMED:
 		_audio.set_backgrounded(false)
 	elif what == NOTIFICATION_WM_GO_BACK_REQUEST and _progress != null:
 		if _hint_dialog.visible:
-			_hint_dialog.hide()
+			_close_hint_dialog()
 		elif _level_select.visible:
 			_back_from_levels()
 		elif _menu.visible:
@@ -254,6 +252,8 @@ func _build_board(level: Dictionary) -> void:
 	var heading := "Level %d" % level.id if _daily_level.is_empty() else "Daily"
 	_level_picker.text = heading
 	var difficulty := "Mystery" if level.get("mystery", false) else String(level.difficulty).capitalize()
+	if level.get("super_hard", false):
+		difficulty = "Super Hard"
 	_level_picker.accessibility_name = "%s · %s · Choose a level" % [heading, difficulty]
 
 	for old_row in _rows.get_children():
@@ -264,12 +264,11 @@ func _build_board(level: Dictionary) -> void:
 	var tube_count: int = level.tubes.size()
 	var row_count := ceili(float(tube_count) / COLUMNS)
 	var column_count := ceili(float(tube_count) / row_count)
-	var layer_count: int = level.tubes.reduce(func(total: int, tube: Array) -> int:
-		return total + tube.size(), 0)
-	_goal_progress.max_value = float(layer_count) / level.capacity
-	_tube_size = Vector2(82, 190) if column_count <= 3 and row_count <= 2 else Vector2(72, 172)
+	_tube_size = Vector2(82, 204) if column_count <= 3 and row_count <= 2 else Vector2(72, 186)
 	if row_count > 2:
-		_tube_size.y = 146
+		_tube_size.y = 166
+	if level.get("super_hard", false):
+		_tube_size.y += 6
 	var row: HBoxContainer
 	for tube_index in range(tube_count):
 		if tube_index % column_count == 0:
@@ -280,6 +279,7 @@ func _build_board(level: Dictionary) -> void:
 		var tube := TubeScene.instantiate() as TubeView
 		tube.custom_minimum_size = _tube_size
 		tube.pressed.connect(_on_tube_pressed.bind(tube_index))
+		tube.seal_landed.connect(_audio.play_effect.bind(AudioManager.Effect.SEAL))
 		row.add_child(tube)
 		_tube_views.append(tube)
 
@@ -340,7 +340,7 @@ func _reject_tube(index: int, message: String) -> void:
 
 func _finish_pour() -> void:
 	_clear_selection()
-	_refresh()
+	_refresh(true)
 
 
 func _undo_move() -> void:
@@ -379,26 +379,23 @@ func _clear_selection() -> void:
 	_status.text = SELECT_SOURCE
 	if _active_level().get("mystery", false) and _rules.move_count() == 0:
 		_status.text = "Pour the top color to reveal a ? layer."
+	elif _active_level().get("super_hard", false) and _rules.move_count() == 0:
+		_status.text = "Super Hard · Match five layers per glass."
 
 
-func _refresh() -> void:
+func _refresh(celebrate_completion: bool = false) -> void:
 	var complete := _rules.is_level_complete()
 	var level := _active_level()
 	if not complete and _victory_tween != null:
 		_victory_tween.kill()
 		_victory_tween = null
-	var filled := 0
 	var tube_size := _tube_size
 	if complete and _rows.get_child_count() > 1:
-		tube_size.y = 110 if _rows.get_child_count() > 2 else 132
+		tube_size.y = 132 if _rows.get_child_count() > 2 else 154
 	for index in range(_tube_views.size()):
 		_tube_views[index].custom_minimum_size = tube_size
 		var layers := _rules.layers_at(index)
-		_tube_views[index].show_tube(index, layers, level.capacity, index == _selected)
-		if layers.size() == level.capacity and layers.count(layers[0]) == level.capacity:
-			filled += 1
-	_goal_progress.value = filled
-	_goal_status.text = "Sort the colors   ·   %d/%d complete" % [filled, int(_goal_progress.max_value)]
+		_tube_views[index].show_tube(index, layers, level.capacity, index == _selected, celebrate_completion)
 	_moves.text = str(_rules.move_count())
 	_moves.accessibility_name = "Moves: " + _moves.text
 	_show_wallet(_progress.coins)
@@ -457,7 +454,7 @@ func _show_wallet(amount: float) -> void:
 
 
 func _busy() -> bool:
-	return _pour.is_active() or _searching
+	return _pour.is_active() or _searching or _hint_dialog.visible
 
 
 func _apply_settings() -> void:
@@ -478,16 +475,35 @@ func _apply_appearance() -> void:
 func _offer_hint() -> void:
 	if _busy() or _hint_move.x >= 0 or _rules.is_level_complete():
 		return
-	if _progress.coins < Rewards.HINT_PRICE:
-		_status.text = "You need %d coins to reveal a hint." % Rewards.HINT_PRICE
-		return
-	_hint_dialog.popup_centered()
+	var can_afford := _progress.coins >= Rewards.HINT_PRICE
+	_hint_confirm.disabled = not can_afford
+	_hint_balance.text = "%d coins available" % _progress.coins if can_afford \
+		else "%d more coins needed" % (Rewards.HINT_PRICE - _progress.coins)
+	_hint_dialog.show()
+	_update_controls()
+	if can_afford:
+		_hint_confirm.grab_focus()
+	else:
+		_hint_cancel.grab_focus()
+
+
+func _close_hint_dialog() -> void:
+	_hint_dialog.hide()
+	_update_controls()
+	_hint.grab_focus()
+
+
+func _unhandled_key_input(event: InputEvent) -> void:
+	if _hint_dialog.visible and event.is_action_pressed("ui_cancel"):
+		_close_hint_dialog()
+		get_viewport().set_input_as_handled()
 
 
 func _find_hint() -> void:
-	if _busy() or _hint_move.x >= 0 or _rules.is_level_complete() or _progress.coins < Rewards.HINT_PRICE:
+	if not _hint_dialog.visible or _hint_confirm.disabled:
 		return
 	_searching = true
+	_hint_dialog.hide()
 	_status.text = "Finding the next move…"
 	_update_controls()
 	var search := Solver.Search.new(_rules.snapshot(), _active_level().capacity, Solver.DEFAULT_SEARCH_LIMIT)
@@ -500,7 +516,7 @@ func _find_hint() -> void:
 		if _progress.buy_hint():
 			_hint_move = result.moves[0]
 			_tube_views[_hint_move.x].set_hint_color(Color("#eab654"))
-			_tube_views[_hint_move.y].set_hint_color(Color("#26a78a"))
+			_tube_views[_hint_move.y].set_hint_color(Color("#26a78a"), true)
 			_status.text = "Pour from tube %d into tube %d." % [_hint_move.x + 1, _hint_move.y + 1]
 		else:
 			_status.text = "The hint purchase could not be saved."
