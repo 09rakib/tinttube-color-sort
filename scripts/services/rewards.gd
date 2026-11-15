@@ -5,6 +5,7 @@ const CLEAR_REWARD := 20
 const PERFECT_BONUS := 10
 const HINT_PRICE := 50
 const DAILY_REWARD := 40
+const VIDEO_REWARD := 20
 const ITEMS := [
 	{"id": "lavender", "name": "Lavender", "kind": "Theme", "price": 0, "color": Color("#f1edff")},
 	{"id": "seafoam", "name": "Seafoam", "kind": "Theme", "price": 80, "color": Color("#daf3ee")},

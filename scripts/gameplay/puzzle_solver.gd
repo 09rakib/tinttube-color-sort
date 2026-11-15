@@ -1,5 +1,5 @@
 extends RefCounted
-## Breadth-first search that can pause between groups of expanded boards.
+## Searches in batches. Larger and concealed boards prioritize promising moves.
 
 enum Status { SOLVED, UNSOLVABLE, LIMIT_REACHED, INVALID }
 const Rules = preload("res://scripts/gameplay/game_rules.gd")
@@ -15,16 +15,23 @@ class Search:
 	var _moves: Array[Vector2i] = [Vector2i.ZERO]
 	var _visited := {}
 	var _cursor := 0
+	var _expanded := 0
+	var _prioritize := false
+	var _frontier: Array[int] = []
 
 
 	func _init(tubes: Array, capacity: int, search_limit: int) -> void:
 		_capacity = capacity
 		_search_limit = search_limit
-		if not Rules.is_valid_layout(tubes, capacity):
+		if not Rules.is_valid_layout(tubes, capacity, true):
 			_finish(Status.INVALID)
 			return
 		_boards.append(tubes)
 		_visited[_key(tubes)] = true
+		_prioritize = tubes.size() >= 8 or tubes.any(func(tube: Array) -> bool:
+			return not tube.is_empty() and tube.front() < 0)
+		if _prioritize:
+			_frontier.append(0)
 
 
 	## Returns true once the search has a result.
@@ -32,23 +39,28 @@ class Search:
 		if not result.is_empty():
 			return true
 		for step in range(budget):
-			if _cursor >= _boards.size():
+			if (_prioritize and _frontier.is_empty()) or _cursor >= _boards.size():
 				_finish(Status.UNSOLVABLE)
 				return true
+			if _prioritize:
+				_cursor = _frontier.pop_back()
 			var board := _boards[_cursor]
 			if Rules.is_solved(board, _capacity):
 				_finish(Status.SOLVED, _reconstruct())
 				return true
-			if _cursor >= _search_limit:
+			if _expanded >= _search_limit:
 				_finish(Status.LIMIT_REACHED)
 				return true
 			_expand(board)
 			_boards[_cursor] = []
-			_cursor += 1
+			_expanded += 1
+			if not _prioritize:
+				_cursor += 1
 		return false
 
 
 	func _expand(board: Array) -> void:
+		var candidates: Array[Vector2i] = []
 		for source in range(board.size()):
 			if board[source].is_empty():
 				continue
@@ -66,7 +78,20 @@ class Search:
 				_visited[key] = true
 				_parents.append(_cursor)
 				_moves.append(Vector2i(source, destination))
+				if _prioritize:
+					var score := amount
+					if not board[destination].is_empty():
+						score += 8
+					if not neighbor[source].is_empty() and board[source][neighbor[source].size() - 1] < 0:
+						score += 4
+					candidates.append(Vector2i(score, _boards.size()))
 				_boards.append(neighbor)
+		if candidates.is_empty():
+			return
+		candidates.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+			return a.x < b.x or (a.x == b.x and a.y > b.y))
+		for candidate in candidates:
+			_frontier.append(candidate.y)
 
 
 	func _reconstruct() -> Array[Vector2i]:
@@ -80,9 +105,10 @@ class Search:
 
 
 	func _finish(status: Status, moves: Array = []) -> void:
-		result = {"status": status, "moves": moves, "explored": _cursor}
+		result = {"status": status, "moves": moves, "explored": _expanded}
 		_boards.clear()
 		_visited.clear()
+		_frontier.clear()
 
 
 	static func _key(tubes: Array) -> String:

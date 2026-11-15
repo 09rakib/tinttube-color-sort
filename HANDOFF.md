@@ -4,10 +4,10 @@ Milestone 5 is complete. Gameplay baseline is commit `10280f0` on `main`. TintTu
 
 ## What works
 
-- The campaign has 50 solver-verified puzzles, sequential unlocks, replay, undo, restart, and star ratings.
+- The campaign has 200 solver-verified puzzles, sequential unlocks, replay, undo, restart, and star ratings. Hard starts at level 36, and Expert starts at level 101. Each board from level 36 onward starts with two empty tubes.
 - Daily Challenge generates and verifies a puzzle from the device’s local date. The first clear earns 40 coins, and replays can improve the best result. Switching to Daily keeps the active campaign attempt in memory.
 - The wallet starts at 100 coins. A first campaign clear earns 20, and the first three-star result for that level earns 10 more. Confirmed hints cost 50 coins once the solver finds a valid move. Shop purchases use game coins.
-- The glass artwork uses translucent rims, reflections, and softly colored animated water. Keep symbols out of the liquid. Optional color names sit below the tubes. Settings also include reduced motion, music, sound effects, and vibration.
+- The glass artwork uses translucent rims, reflections, and softly colored animated water. Every fifth level covers the hidden layers with gold `?` markers until a pour exposes them. Optional color names sit below the tubes. Settings also include reduced motion, music, sound effects, and vibration.
 
 ## Where to make changes
 
@@ -37,10 +37,8 @@ The Milestone 5 suite passed 3,053 checks. A Windows run on a GTX 1650 averaged 
 
 The [local browser preview](http://127.0.0.1:8765/play.html?build=daily) works while the preview server is running. To rebuild on another machine, install the matching Godot Web export template, create a single-threaded Web preset, include `data/levels/*.json`, and export into `build/web/`. Serve that directory over HTTP. The root HTML files are the Stitch reference.
 
-## Pick up at Milestone 6
+## Milestone 6 in progress
 
-1. Select a maintained Android AdMob integration compatible with Godot 4.7.2. Verify rewarded ads with test units, handle load and show failures, and award coins only after the provider’s reward callback. Keep the game playable offline and account for the provider’s consent requirements.
-2. Define the Google Play Billing interface. Current shop items use the in-game wallet.
-3. Run Android regressions for touch, navigation, vibration, pause and resume, saves, and ad failure paths. Follow the Android setup in [README.md](README.md).
+The optional rewarded offer is wired to Poing AdMob 5.1.0 in Android debug builds. It uses Google's demo unit and awards 20 coins once on the SDK's earned callback. The offline build runs without the addon. [Android QA](ANDROID_QA.md) covers the build commands, device checks, and the Google Play Billing interface. Cosmetics still use the in-game wallet.
 
-Milestone 7 covers the final Android application ID, signed AAB, Play Console requirements, and release preparation. Signing credentials are a release input.
+The Android emulator loaded and displayed a demo ad, awarded 20 coins once, and retained the balance after relaunch. Finish the region-specific consent form and the remaining device regressions. Milestone 7 still needs the final Android application ID, Play Console access, and the upload key before exporting and validating a signed AAB.

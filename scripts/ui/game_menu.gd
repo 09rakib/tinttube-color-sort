@@ -9,6 +9,7 @@ signal settings_changed
 
 const Progress = preload("res://scripts/services/player_progress.gd")
 const Rewards = preload("res://scripts/services/rewards.gd")
+const RewardedAds = preload("res://scripts/services/rewarded_ads.gd")
 const Tube = preload("res://scenes/gameplay/tube.tscn")
 
 var _progress: Progress
@@ -30,6 +31,10 @@ var _back: Button
 var _toggles := {}
 var _item_buttons := {}
 var _shop_message: Label
+var _ads: RewardedAds
+var _ad_button: Button
+var _ad_message: Label
+var _ad_privacy: Button
 var _demo_tubes: Array[Button] = []
 
 
@@ -38,7 +43,7 @@ func _ready() -> void:
 	var header := HBoxContainer.new()
 	header.add_theme_constant_override("separation", 12)
 	add_child(header)
-	_back = _button(header, "Back", func() -> void: open("home", _progress))
+	_back = _button(header, "Back", go_back)
 	_title = _label(header, "", 20, true)
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var badge := PanelContainer.new()
@@ -67,6 +72,23 @@ func open(page: String, progress: Progress) -> void:
 	_shop_message.text = ""
 	_refresh()
 	show()
+
+
+func set_rewarded_ads(ads: RewardedAds) -> void:
+	_ads = ads
+	_ads.changed.connect(_refresh_ads)
+	_ads.reward_saved.connect(func() -> void:
+		if _progress != null:
+			_refresh()
+	)
+	_refresh_ads()
+
+
+func go_back() -> bool:
+	if not _back.visible:
+		return false
+	open("home", _progress)
+	return true
 
 
 func _build_home() -> void:
@@ -129,11 +151,14 @@ func _build_settings() -> void:
 	_label(info, "TintTube · Color Sort Puzzle", 18, true)
 	var privacy := AcceptDialog.new()
 	privacy.title = "Privacy"
-	privacy.dialog_text = "TintTube saves your progress and preferences on this device. This build does not require an account or send gameplay data."
+	privacy.dialog_text = "TintTube saves your progress and preferences on this device. No account is needed. Optional ads use Google AdMob."
 	privacy.get_label().autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	add_child(privacy)
 	var privacy_button := _button(info, "Privacy", func() -> void: privacy.popup_centered(Vector2i(300, 180)))
 	privacy_button.theme_type_variation = &"SecondaryButton"
+	_ad_privacy = _button(info, "Ad privacy options", func() -> void: _ads.open_privacy())
+	_ad_privacy.theme_type_variation = &"SecondaryButton"
+	_ad_privacy.hide()
 
 
 func _add_toggles(card: VBoxContainer, preferences: Array) -> void:
@@ -203,6 +228,11 @@ func _build_shop() -> void:
 	_shop.add_child(scroll)
 	var items := _column(scroll, 13)
 	items.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_ad_button = _button(items, "", func() -> void: _ads.press())
+	_ad_button.hide()
+	_ad_message = _label(items, "", 14)
+	_ad_message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_ad_message.hide()
 	for kind in ["Theme", "Rim"]:
 		_label(items, "Themes" if kind == "Theme" else "Glass rims", 19, true)
 		for item in Rewards.ITEMS:
@@ -224,6 +254,21 @@ func _build_shop() -> void:
 			_item_buttons[id] = _button(row, "", _buy_or_equip.bind(id))
 	_shop_message = _label(_shop, "", 14)
 	_shop_message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+
+
+func _refresh_ads() -> void:
+	var state := _ads.state
+	_ad_button.visible = state != RewardedAds.State.HIDDEN
+	_ad_button.disabled = state not in [RewardedAds.State.IDLE, RewardedAds.State.READY]
+	match state:
+		RewardedAds.State.LOADING: _ad_button.text = "Loading ad…"
+		RewardedAds.State.READY: _ad_button.text = "Watch ad · +%d coins" % Rewards.VIDEO_REWARD
+		RewardedAds.State.SHOWING: _ad_button.text = "Ad playing…"
+		_: _ad_button.text = "Find ad · +%d coins" % Rewards.VIDEO_REWARD
+	_ad_message.text = _ads.message
+	_ad_message.visible = not _ads.message.is_empty()
+	_ad_privacy.visible = _ads.privacy_required
+	_ad_privacy.disabled = _ad_button.disabled
 
 
 func _change_setting(enabled: bool, key: String) -> void:

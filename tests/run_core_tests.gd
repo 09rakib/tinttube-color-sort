@@ -8,10 +8,45 @@ const AudioManager = preload("res://scripts/services/audio_manager.gd")
 const Solver = preload("res://scripts/gameplay/puzzle_solver.gd")
 const Progress = preload("res://scripts/services/player_progress.gd")
 const Daily = preload("res://scripts/gameplay/daily_generator.gd")
+const Ads = preload("res://scripts/services/rewarded_ads.gd")
+const Rewards = preload("res://scripts/services/rewards.gd")
 const FIRST_SOLUTION := [Vector2i(0, 2), Vector2i(1, 0), Vector2i(1, 2)]
 
 var _checks := 0
 var _failures := 0
+
+
+class TestAdProvider extends RefCounted:
+	var loaded: Callable
+	var load_failed: Callable
+	var privacy_changed: Callable
+	var earned: Callable
+	var closed: Callable
+	var show_failed: Callable
+	var loads := 0
+	var shows := 0
+	var discarded := 0
+
+	func available() -> bool:
+		return true
+
+	func load_ad(on_load: Callable, on_fail: Callable, on_privacy: Callable) -> void:
+		loads += 1
+		loaded = on_load
+		load_failed = on_fail
+		privacy_changed = on_privacy
+
+	func show_ad(_ad: RefCounted, on_earned: Callable, on_close: Callable, on_fail: Callable) -> void:
+		shows += 1
+		earned = on_earned
+		closed = on_close
+		show_failed = on_fail
+
+	func discard_ad(_ad: RefCounted) -> void:
+		discarded += 1
+
+	func open_privacy(on_close: Callable) -> void:
+		on_close.call(false)
 
 
 func _initialize() -> void:
@@ -24,7 +59,9 @@ func _run() -> void:
 	var folder := "user://tinttube-test-%d-%d" % [OS.get_process_id(), Time.get_ticks_usec()]
 	_check(DirAccess.make_dir_absolute(folder) == OK, "Create an isolated save directory")
 	_test_progress(folder + "/unit")
+	_test_expanded_campaign(folder + "/campaign")
 	_test_economy(folder + "/economy")
+	_test_rewarded_ads(folder + "/ads")
 	_test_daily(folder + "/daily")
 	await _test_gameplay_scene(folder + "/scene")
 	for file in DirAccess.get_files_at(folder):
@@ -32,6 +69,59 @@ func _run() -> void:
 	DirAccess.remove_absolute(folder)
 	print("TintTube core: %d checks, %d failures." % [_checks, _failures])
 	quit(0 if _failures == 0 else 1)
+
+
+func _test_rewarded_ads(path: String) -> void:
+	var ads := Ads.new()
+	root.add_child(ads)
+	var provider := TestAdProvider.new()
+	var progress := Progress.new(50, path)
+	var start := progress.coins
+	ads.setup(progress, provider)
+	ads.press()
+	ads.press()
+	_check(provider.loads == 1 and provider.shows == 0, "Only one ad request can be pending")
+	provider.load_failed.call()
+	_check(ads.state == Ads.State.IDLE and progress.coins == start, "An offline ad request can be retried without a reward")
+
+	ads.press()
+	provider.privacy_changed.call(true)
+	provider.loaded.call(RefCounted.new())
+	_check(provider.shows == 0 and ads.state == Ads.State.READY, "Loading never opens the ad automatically")
+	ads.open_privacy()
+	_check(ads.state == Ads.State.IDLE and provider.discarded == 1, "Privacy changes discard the loaded ad")
+
+	ads.press()
+	provider.loaded.call(RefCounted.new())
+	ads.press()
+	ads.press()
+	_check(provider.shows == 1 and progress.coins == start, "Showing an ad does not earn coins")
+	var stale_reward := provider.earned
+	provider.closed.call()
+	_check(ads.state == Ads.State.IDLE and progress.coins == start, "Closing early does not earn coins")
+
+	ads.press()
+	provider.loaded.call(RefCounted.new())
+	ads.press()
+	stale_reward.call()
+	provider.show_failed.call()
+	_check(ads.state == Ads.State.IDLE and progress.coins == start, "Stale and failed shows cannot change the wallet")
+
+	ads.press()
+	provider.loaded.call(RefCounted.new())
+	ads.press()
+	provider.earned.call()
+	provider.earned.call()
+	provider.closed.call()
+	provider.earned.call()
+	var expected := start + Rewards.VIDEO_REWARD
+	_check(progress.coins == expected and Progress.new(50, path).coins == expected,
+		"Exactly one earned reward survives restart, even with duplicate callbacks")
+	ads.free()
+
+	var unwritable := Progress.new(50, path + "/missing/slot")
+	_check(not unwritable.record_video_reward() and unwritable.coins == start,
+		"A failed reward save rolls back the displayed balance")
 
 
 func _test_rules() -> void:
@@ -81,12 +171,22 @@ func _test_rules() -> void:
 	_check(not rules.is_level_complete(), "Full mixed tubes are not a win")
 	rules.start_level([[0, 0, 0, 0], [], [1, 1, 1, 1]])
 	_check(rules.is_level_complete(), "Full sorted tubes and empties are a win")
+	rules.start_level([[0, 1, 2, 2], [], []], 4, true)
+	var hidden := rules.snapshot()
+	_check(hidden[0] == [~0, ~1, ~2, 2], "A mystery tube starts with only its top color visible")
+	_check(rules.pour_liquid(0, 1) == 1 and rules.layers_at(0) == [~0, ~1, 2],
+		"A matching concealed layer stays behind and reveals after the pour")
+	_check(rules.pour_liquid(0, 1) == 1 and rules.layers_at(0) == [~0, 1],
+		"A second pour reveals only the next layer")
+	_check(rules.undo_move() and rules.layers_at(0) == [~0, ~1, 2], "Undo restores the cover")
+	rules.restart_level()
+	_check(rules.snapshot() == hidden, "Restart restores all original mystery covers")
 
 
 func _test_levels() -> void:
 	var levels := Catalog.load_core_levels()
 	var started := Time.get_ticks_msec()
-	_check(levels.size() == 50, "Catalog contains 50 levels")
+	_check(levels.size() == 200, "Catalog contains 200 levels")
 	_check(Solver.solve([[0, 1, 0, 1], [1, 0, 1, 0]]).status == Solver.Status.UNSOLVABLE,
 		"An exhausted deadlock is distinguished from a search limit")
 	_check(Solver.solve([[0, 1], []], 4, 0).status == Solver.Status.LIMIT_REACHED, "Reports search limit")
@@ -95,30 +195,62 @@ func _test_levels() -> void:
 	_check(solved.status == Solver.Status.SOLVED and solved.moves.is_empty(), "Solved boards need no moves")
 
 	var max_explored := 0
+	var hard_sizes := {}
 	for level in levels:
 		var label := "Level %d" % level.id
-		var expected_tier := "tutorial" if level.id <= 10 else ("easy" if level.id <= 30 else "medium")
+		var expected_tier := "hard"
+		if level.id <= 10:
+			expected_tier = "tutorial"
+		elif level.id <= 30:
+			expected_tier = "easy"
+		elif level.id <= 35:
+			expected_tier = "medium"
+		elif level.id > 100:
+			expected_tier = "expert"
 		_check(level.difficulty == expected_tier, "%s has the intended difficulty tier" % label)
+		_check(level.mystery == (level.id % 5 == 0), "%s uses the intended reveal rules" % label)
+		if level.id >= 36:
+			var tube_count: int = level.tubes.size()
+			hard_sizes[tube_count] = true
+			_check(tube_count in [8, 10, 12] and level.tubes.count([]) == 2
+				and _inventory(level.tubes).size() == tube_count - 2,
+				"%s has the requested tube count and two empty tubes" % label)
 		var rules := Rules.new()
-		_check(rules.start_level(level.tubes, level.capacity), "%s loads" % label)
+		_check(rules.start_level(level.tubes, level.capacity, level.mystery), "%s loads" % label)
 		var start := rules.snapshot()
 		_check(not rules.is_level_complete(), "%s begins unsolved" % label)
 		var expected_inventory := _inventory(start)
 		for quantity in expected_inventory.values():
 			_check(quantity == level.capacity, "%s has four layers of each color" % label)
-		var solution := Solver.solve(level.tubes, level.capacity)
+		var solution := Solver.solve(start, level.capacity)
 		max_explored = maxi(max_explored, solution.explored)
 		_check(solution.status == Solver.Status.SOLVED and solution.moves.size() == level.par_moves,
-			"%s has a shortest solution matching its recorded par" % label)
-		_check(level.tubes == start, "%s solver preserves its input" % label)
+			"%s has a solution matching its recorded par" % label)
+		_check(rules.snapshot() == start, "%s solver preserves its input" % label)
 		for move: Vector2i in solution.moves:
 			_check(rules.pour_liquid(move.x, move.y) > 0, "%s solution move is legal" % label)
 			var board := rules.snapshot()
 			_check(_inventory(board) == expected_inventory, "%s preserves color quantities" % label)
-			_check(Rules.is_valid_layout(board, level.capacity), "%s respects capacity" % label)
+			_check(Rules.is_valid_layout(board, level.capacity, true), "%s respects capacity" % label)
 		_check(rules.is_level_complete(), "Verified solution wins %s" % label)
+	_check(hard_sizes.size() == 3, "The hard campaign uses all three board sizes")
 	print("Solver verified %d boards in %d ms (max %d expanded states)." %
 		[levels.size(), Time.get_ticks_msec() - started, max_explored])
+
+
+func _test_expanded_campaign(path: String) -> void:
+	var original := Progress.new(50, path)
+	for level in range(1, 51):
+		original.record_win(level, 25)
+	original.select_level(50)
+	var expanded := Progress.new(Catalog.load_core_levels().size(), path)
+	_check(expanded.completed_count() == 50 and expanded.best_moves(50) == original.best_moves(50)
+		and expanded.current_level == 50 and expanded.coins == original.coins,
+		"Expanding the campaign preserves moves, current level, and coins from an existing save")
+	_check(expanded.can_play(51) and not expanded.can_play(52),
+		"Completing the original campaign unlocks the first Hard level")
+	_check(expanded.select_level(51) and Progress.new(100, path).current_level == 51,
+		"The first Hard level can be selected and restored")
 
 
 func _test_progress(path: String) -> void:
@@ -263,7 +395,6 @@ func _test_gameplay_scene(path: String) -> void:
 	var status := board.get_node("%Status") as Label
 	var victory := board.get_node("%Victory") as PanelContainer
 	var level_picker := board.get_node("%Levels") as Button
-	var difficulty := board.get_node("%Difficulty") as Label
 	var level_select := board.get_node("%LevelSelect") as Control
 	var groups := level_select.get_node("%DifficultyGroups")
 	var level_one := groups.get_child(1).get_child(0) as Button
@@ -274,11 +405,11 @@ func _test_gameplay_scene(path: String) -> void:
 	var animation := board.get_node("%PourAnimation")
 	var stream := animation.get_node("Stream") as Control
 	var audio := board.get_node("%Audio")
-	_check(rows.get_child_count() == 1 and difficulty.text.begins_with("Level 1 ·"), "Native board loads Level 1")
+	_check(rows.get_child_count() == 1 and level_picker.text == "Level 1", "Native board loads Level 1")
 	_click(level_picker)
 	await process_frame
 	await process_frame
-	_check(level_select.visible and groups.get_child_count() == 6, "Level selection shows the three tier grids")
+	_check(level_select.visible and groups.get_child_count() == 10, "Level selection shows five tier grids")
 	_check(not level_one.disabled and level_two.disabled, "Only Level 1 starts unlocked in the grid")
 	_click(level_two)
 	_check(level_select.visible, "Tapping a locked tile stays on level selection")
@@ -316,9 +447,11 @@ func _test_gameplay_scene(path: String) -> void:
 	_check(first.get("pose_offset").y < -8.0 and first.get_global_rect() == hit_area,
 		"Selected tube lifts while its hit area stays fixed")
 	_click(second)
-	_check(status.text.begins_with("That tube") and moves.text == "Moves: 0", "Invalid tap rejects the pour")
+	_check(second.get("_selected") and not first.get("_selected") and moves.text == "0",
+		"Tapping an incompatible filled tube switches selection without pouring")
+	_click(first)
 	_click(third)
-	_check(animation.is_active() and moves.text == "Moves: 0", "Pour locks before updating the counter")
+	_check(animation.is_active() and moves.text == "0", "Pour locks before updating the counter")
 	_check(first.disabled and second.disabled and third.disabled and undo.disabled and restart.disabled
 		and level_picker.disabled, "Pour locks tubes, Undo, Restart, and level selection")
 	_click(first)
@@ -345,12 +478,12 @@ func _test_gameplay_scene(path: String) -> void:
 		await process_frame
 	_check(not stream.visible and not pour_sound.playing, "The pouring cue stops with the stream")
 	await _wait_for_pour(animation)
-	_check(moves.text == "Moves: 1" and not stream.visible and not first.disabled,
+	_check(moves.text == "1" and not stream.visible and not first.disabled,
 		"Exactly one move is reflected after the animation")
 	_check(first.get("_layers") == [0, 0, 0] and third.get("_layers") == [1],
 		"Final rendered tube layers match the committed move")
 	_click(undo)
-	_check(moves.text == "Moves: 0", "Undo button restores the move counter")
+	_check(moves.text == "0", "Undo button restores the move counter")
 
 	_click(first)
 	_click(third)
@@ -359,18 +492,18 @@ func _test_gameplay_scene(path: String) -> void:
 		await process_frame
 	_check(pour_sound.playing, "The pouring cue is active before interruption")
 	board.notification(Node.NOTIFICATION_APPLICATION_PAUSED)
-	_check(moves.text == "Moves: 1" and not animation.is_active() and not stream.visible
+	_check(moves.text == "1" and not animation.is_active() and not stream.visible
 		and not first.disabled, "Backgrounding settles the committed move exactly once")
 	_check(not pour_sound.playing, "Backgrounding stops the interrupted pouring cue")
 	_check(first.get("pose_offset") == Vector2.ZERO and first.get("pose_angle") == 0.0,
 		"Interrupted animation resets the source pose")
 	_click(restart)
-	_check(moves.text == "Moves: 0", "Restart button resets the board")
+	_check(moves.text == "0", "Restart button resets the board")
 	for move in FIRST_SOLUTION:
 		_click(first_row.get_child(move.x) as Button)
 		_click(first_row.get_child(move.y) as Button)
 		await _wait_for_pour(animation)
-	_check(victory.visible and moves.text == "Moves: 3" and first.disabled, "A win locks pours and shows victory")
+	_check(victory.visible and moves.text == "3" and first.disabled, "A win locks pours and shows victory")
 	_check((audio.get_child(AudioManager.Effect.COMPLETE) as AudioStreamPlayer).playing,
 		"Victory plays the completion cue")
 	await process_frame
@@ -393,7 +526,7 @@ func _test_gameplay_scene(path: String) -> void:
 	await process_frame
 	await process_frame
 	_click(board.get_node("%NextLevel") as Button)
-	_check(difficulty.text.begins_with("Level 2 ·") and not victory.visible and moves.text == "Moves: 0",
+	_check(level_picker.text == "Level 2" and not victory.visible and moves.text == "0",
 		"Next Level loads the next unlocked puzzle")
 	_check(Progress.new(50, path).current_level == 2, "Next Level updates the saved current level")
 	await process_frame
@@ -402,7 +535,7 @@ func _test_gameplay_scene(path: String) -> void:
 	_click(rows.get_child(1).get_child(0) as Button)
 	_check(animation.is_active(), "Multi-layer pour starts on the next board")
 	board.size += Vector2(1, 0)
-	_check(not animation.is_active() and moves.text == "Moves: 1", "Resizing settles a multi-layer pour")
+	_check(not animation.is_active() and moves.text == "1", "Resizing settles a multi-layer pour")
 	var resized_source := rows.get_child(0).get_child(0)
 	var resized_destination := rows.get_child(1).get_child(0)
 	_check(resized_source.get("_layers") == [0, 0] and resized_destination.get("_layers") == [1, 1],
@@ -415,13 +548,13 @@ func _test_gameplay_scene(path: String) -> void:
 	_click(level_one)
 	await process_frame
 	await process_frame
-	_check(not level_select.visible and difficulty.text.begins_with("Level 1 ·")
-		and moves.text == "Moves: 0", "Tapping a completed tile reopens it for replay")
+	_check(not level_select.visible and level_picker.text == "Level 1"
+		and moves.text == "0", "Tapping a completed tile reopens it for replay")
 	_click(level_picker)
 	await process_frame
 	await process_frame
 	_click(level_two)
-	_check(not level_select.visible and difficulty.text.begins_with("Level 2 ·"),
+	_check(not level_select.visible and level_picker.text == "Level 2",
 		"Tapping a newly unlocked tile opens its board")
 	board.queue_free()
 	# Give the audio mixer time to release the just-stopped cues before closing the engine.
@@ -430,11 +563,33 @@ func _test_gameplay_scene(path: String) -> void:
 	reopened.set("progress_path", path)
 	root.add_child(reopened)
 	await process_frame
-	_check((reopened.get_node("%Difficulty") as Label).text.begins_with("Level 2 ·"),
+	_check((reopened.get_node("%Levels") as Button).text == "Level 2",
 		"Launching the scene again resumes the saved level")
 	await _test_daily_scene(reopened)
+	await _test_mystery_scene(reopened)
 	reopened.queue_free()
 	await create_timer(0.12).timeout
+
+
+func _test_mystery_scene(board: Control) -> void:
+	var progress = board.get("_progress")
+	for level in range(2, 5):
+		progress.record_win(level, 20)
+	board.call("_choose_level", 5)
+	await process_frame
+	var tubes: Array = board.get("_tube_views")
+	var source := tubes[0] as Button
+	var concealed: Array = source.get("_layers").duplicate()
+	_check(concealed[0] < 0 and concealed[1] < 0 and concealed[2] < 0 and concealed[3] >= 0
+		and source.accessibility_name.contains("hidden, hidden, hidden"),
+		"The playable mystery board shows only the top color and describes covered layers as hidden")
+	board.call("_on_tube_pressed", 0)
+	board.call("_on_tube_pressed", 4)
+	board.get_node("%PourAnimation").settle()
+	_check(source.get("_layers") == [concealed[0], concealed[1], ~concealed[2]],
+		"A completed pour reveals exactly one layer in the tube view")
+	board.call("_undo_move")
+	_check(source.get("_layers") == concealed, "Undo restores mystery covers in the tube view")
 
 
 func _test_daily_scene(board: Control) -> void:
@@ -444,11 +599,11 @@ func _test_daily_scene(board: Control) -> void:
 	board.call("_on_tube_pressed", 0)
 	board.call("_on_tube_pressed", 3)
 	animation.settle()
-	_check(moves.text == "Moves: 1", "The campaign has an active attempt before Daily")
+	_check(moves.text == "1", "The campaign has an active attempt before Daily")
 	await board.call("_open_daily")
 	board.call("_play_daily")
 	var daily: Dictionary = board.get("_daily_level")
-	_check(not daily.is_empty() and moves.text == "Moves: 0", "Daily opens its own board")
+	_check(not daily.is_empty() and moves.text == "0", "Daily opens its own board")
 	if daily.is_empty():
 		return
 	progress.set_setting("reduced_motion", true)
@@ -462,8 +617,17 @@ func _test_daily_scene(board: Control) -> void:
 	_check(progress.daily_best(daily.date) == solution.moves.size() and progress.coins == wallet + 40,
 		"A daily victory saves its own result and coins")
 	board.call("_choose_level", 2)
-	_check(moves.text == "Moves: 1" and progress.current_level == 2,
+	_check(moves.text == "1" and progress.current_level == 2,
 		"Returning from Daily restores the same campaign attempt")
+	var menu := board.get_node("%GameMenu") as Control
+	board.notification(Node.NOTIFICATION_WM_GO_BACK_REQUEST)
+	_check(menu.visible, "Android Back from the board opens Home")
+	menu.call("open", "settings", progress)
+	board.notification(Node.NOTIFICATION_WM_GO_BACK_REQUEST)
+	_check(menu.visible and (menu.get("_home") as Control).visible,
+		"Android Back from Settings returns to Home")
+	board.call("_choose_level", 2)
+	_check(moves.text == "1", "Android Back preserves the campaign attempt")
 
 
 func _wait_for_pour(animation: Node) -> void:
@@ -489,7 +653,8 @@ func _click(button: Button) -> void:
 func _inventory(tubes: Array) -> Dictionary:
 	var totals := {}
 	for tube in tubes:
-		for color in tube:
+		for layer in tube:
+			var color: int = ~layer if layer < 0 else layer
 			totals[color] = totals.get(color, 0) + 1
 	return totals
 

@@ -9,24 +9,33 @@ var _tubes: Array = []
 var _history: Array[Array] = []
 
 
-func start_level(tubes: Array, capacity: int = DEFAULT_CAPACITY) -> bool:
+func start_level(tubes: Array, capacity: int = DEFAULT_CAPACITY, mystery: bool = false) -> bool:
 	if not is_valid_layout(tubes, capacity):
 		return false
 	_capacity = capacity
 	_initial = tubes.duplicate(true)
+	if mystery:
+		# Negative values encode concealed colors from the bottom up.
+		for tube in _initial:
+			for index in range(tube.size() - 1):
+				tube[index] = ~tube[index]
 	restart_level()
 	return true
 
 
-static func is_valid_layout(tubes: Array, capacity: int) -> bool:
+static func is_valid_layout(tubes: Array, capacity: int, allow_concealed: bool = false) -> bool:
 	if capacity < 1 or tubes.size() < 2:
 		return false
 	for tube in tubes:
 		if not tube is Array or tube.size() > capacity:
 			return false
+		var seen_visible := false
 		for layer in tube:
-			if not layer is int or layer < 0:
+			if not layer is int or (layer < 0 and (not allow_concealed or seen_visible)):
 				return false
+			seen_visible = seen_visible or layer >= 0
+		if not tube.is_empty() and not seen_visible:
+			return false
 	return true
 
 
@@ -125,3 +134,5 @@ static func transfer_layers(tubes: Array, source: int, destination: int, amount:
 	var destination_tube: Array = tubes[destination]
 	for layer in range(amount):
 		destination_tube.append(source_tube.pop_back())
+	if not source_tube.is_empty() and source_tube.back() < 0:
+		source_tube[-1] = ~source_tube[-1]

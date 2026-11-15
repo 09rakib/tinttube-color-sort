@@ -3,7 +3,7 @@ extends RefCounted
 
 const Rules = preload("res://scripts/gameplay/game_rules.gd")
 const CORE_LEVELS := "res://data/levels/core_levels.json"
-const SUPPORTED_COLORS := 6
+const TubeView = preload("res://scripts/ui/tube.gd")
 
 
 static func load_core_levels() -> Array[Dictionary]:
@@ -48,7 +48,7 @@ static func _parse_level(raw: Variant) -> Dictionary:
 		var tube: Array[int] = []
 		for raw_layer in raw_tube:
 			var color := _unsigned_integer(raw_layer)
-			if color < 0 or color >= SUPPORTED_COLORS:
+			if color < 0 or color >= TubeView.LIQUIDS.size():
 				return {}
 			tube.append(color)
 			totals[color] = totals.get(color, 0) + 1
@@ -61,7 +61,8 @@ static func _parse_level(raw: Variant) -> Dictionary:
 			return {}
 	if Rules.is_solved(tubes, capacity):
 		return {}
-	return {"id": id, "difficulty": difficulty, "capacity": capacity, "tubes": tubes, "par_moves": par_moves}
+	return {"id": id, "difficulty": difficulty, "capacity": capacity, "tubes": tubes,
+		"par_moves": par_moves, "mystery": id % 5 == 0}
 
 
 static func _unsigned_integer(value: Variant) -> int:

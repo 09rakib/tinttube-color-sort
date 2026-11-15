@@ -1,5 +1,19 @@
 # TintTube development log
 
+## Milestone 6 · Android QA and monetization
+
+Connected the optional Android demo rewarded offer to the existing wallet. The SDK's earned callback saves the 20-coin reward. The native Godot suite passed 3,065 checks, including duplicate callbacks, early close, load and show failures, retry, a failed wallet save, and Android Back navigation. The pinned Poing addon API also resolved in a separate Godot headless run.
+
+Added the Android QA build preset and staging script. Both APK variants exported and passed debug signature verification. Both builds target API 36 and include ARM64 and x86_64. The AdMob APK passed 16 KB ZIP and native ELF alignment checks. See [Android QA](ANDROID_QA.md) for the device checks, billing contract, and release inputs.
+
+On an Android 17 x86_64 emulator with 16 KB pages, the Shop loaded and displayed Google's rewarded demo ad after the UMP status update. The SDK earned callback added 20 coins once. The wallet showed 120 coins in Shop and in Level 1 after force-stopping and reopening the game. The region-specific consent form and physical device checks remain open.
+
+Emulator touch input completed Level 1 in three moves. Backgrounding after a pour and returning preserved the single move. Undo and Restart restored the original board. The Level 1 victory saved the three-move result and the 30-coin campaign reward, and Levels showed Level 2 unlocked. Settings and Daily Challenge also opened through the Home menu.
+
+With Wi-Fi and mobile data disabled, Shop displayed the unavailable-ad message and kept the wallet at 150 coins. Restoring connectivity and retrying loaded another demo ad. This creative continued playing after the early Back input and eventually issued its earned callback, so early dismissal without a reward is covered by the automated suite and still needs a suitable ad creative for device QA.
+
+The first Android Back test from Daily gameplay exited the app. The updated code returns to Home and preserves the current attempt. Automated Back checks passed, and both updated APKs passed signature and 16 KB ZIP alignment verification. The emulator disconnected during the physical Back input retest, so that device check remains open.
+
 ## Milestone 5 · Daily Challenges and Accessibility
 
 Added an offline puzzle for each local calendar date. A seeded shuffle supplies candidates, and the solver checks every accepted board against a 10–18 move target. The save keeps the approved board and completion history, and awards 40 coins on the first clear of each date. Switching to Daily preserves the current campaign attempt in memory. Achievements track milestones in both modes.

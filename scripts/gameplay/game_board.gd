@@ -12,6 +12,7 @@ const LevelSelect = preload("res://scripts/ui/level_select.gd")
 const GameMenu = preload("res://scripts/ui/game_menu.gd")
 const StarRating = preload("res://scripts/ui/star_rating.gd")
 const Rewards = preload("res://scripts/services/rewards.gd")
+const RewardedAds = preload("res://scripts/services/rewarded_ads.gd")
 const Solver = preload("res://scripts/gameplay/puzzle_solver.gd")
 const Daily = preload("res://scripts/gameplay/daily_generator.gd")
 const COLUMNS := 4
@@ -22,8 +23,9 @@ const SELECT_SOURCE := "Tap a tube to select its top color."
 @onready var _content: VBoxContainer = %Content
 @onready var _level_select: LevelSelect = %LevelSelect
 @onready var _save_status: Label = %SaveStatus
-@onready var _difficulty: Label = %Difficulty
 @onready var _moves: Label = %Moves
+@onready var _goal_status: Label = %GoalStatus
+@onready var _goal_progress: ProgressBar = %GoalProgress
 @onready var _rows: VBoxContainer = %TubeRows
 @onready var _status: Label = %Status
 @onready var _undo: Button = %Undo
@@ -39,7 +41,7 @@ const SELECT_SOURCE := "Tap a tube to select its top color."
 @onready var _hint: Button = %Hint
 @onready var _stars: StarRating = %Stars
 @onready var _reward_label: Label = %Reward
-@onready var _background: TextureRect = $Background
+@onready var _background: ColorRect = $Background
 
 @export var start_at_home := false
 var _rules := Rules.new()
@@ -47,6 +49,7 @@ var progress_path := Progress.DEFAULT_PATH
 var _progress: Progress
 var _levels: Array[Dictionary] = []
 var _tube_views: Array[TubeView] = []
+var _tube_size := Vector2(72, 172)
 var _level_index := 0
 var _selected := -1
 var _victory_tween: Tween
@@ -78,6 +81,11 @@ func _ready() -> void:
 		_restart.disabled = true
 		return
 	_progress = Progress.new(_levels.size(), progress_path)
+	var ads := RewardedAds.new()
+	add_child(ads)
+	ads.setup(_progress)
+	ads.reward_saved.connect(func() -> void: _show_wallet(_progress.coins))
+	_menu.set_rewarded_ads(ads)
 	_apply_settings()
 	_menu.play_requested.connect(_play_from_home)
 	_menu.levels_requested.connect(_open_levels)
@@ -116,6 +124,17 @@ func _notification(what: int) -> void:
 		_audio.set_backgrounded(true)
 	elif what == NOTIFICATION_APPLICATION_RESUMED:
 		_audio.set_backgrounded(false)
+	elif what == NOTIFICATION_WM_GO_BACK_REQUEST and _progress != null:
+		if _hint_dialog.visible:
+			_hint_dialog.hide()
+		elif _level_select.visible:
+			_back_from_levels()
+		elif _menu.visible:
+			if not _menu.go_back():
+				get_tree().quit()
+		else:
+			_pour.settle()
+			_open_home()
 
 
 func _open_levels() -> void:
@@ -224,7 +243,7 @@ func _choose_level(level: int) -> void:
 
 func _load_level(index: int) -> void:
 	var level := _levels[index]
-	_rules.start_level(level.tubes, level.capacity)
+	_rules.start_level(level.tubes, level.capacity, level.mystery)
 	_level_index = index
 	_build_board(level)
 
@@ -233,7 +252,9 @@ func _build_board(level: Dictionary) -> void:
 	_last_reward = 0
 	_hint_move = Vector2i(-1, -1)
 	var heading := "Level %d" % level.id if _daily_level.is_empty() else "Daily"
-	_difficulty.text = "%s · %s" % [heading, String(level.difficulty).capitalize()]
+	_level_picker.text = heading
+	var difficulty := "Mystery" if level.get("mystery", false) else String(level.difficulty).capitalize()
+	_level_picker.accessibility_name = "%s · %s · Choose a level" % [heading, difficulty]
 
 	for old_row in _rows.get_children():
 		_rows.remove_child(old_row)
@@ -243,14 +264,21 @@ func _build_board(level: Dictionary) -> void:
 	var tube_count: int = level.tubes.size()
 	var row_count := ceili(float(tube_count) / COLUMNS)
 	var column_count := ceili(float(tube_count) / row_count)
+	var layer_count: int = level.tubes.reduce(func(total: int, tube: Array) -> int:
+		return total + tube.size(), 0)
+	_goal_progress.max_value = float(layer_count) / level.capacity
+	_tube_size = Vector2(82, 190) if column_count <= 3 and row_count <= 2 else Vector2(72, 172)
+	if row_count > 2:
+		_tube_size.y = 146
 	var row: HBoxContainer
 	for tube_index in range(tube_count):
 		if tube_index % column_count == 0:
 			row = HBoxContainer.new()
 			row.alignment = BoxContainer.ALIGNMENT_CENTER
-			row.add_theme_constant_override("separation", 10)
+			row.add_theme_constant_override("separation", 18 if column_count <= 3 else 9)
 			_rows.add_child(row)
 		var tube := TubeScene.instantiate() as TubeView
+		tube.custom_minimum_size = _tube_size
 		tube.pressed.connect(_on_tube_pressed.bind(tube_index))
 		row.add_child(tube)
 		_tube_views.append(tube)
@@ -293,7 +321,12 @@ func _on_tube_pressed(index: int) -> void:
 			_pour.animate(_tube_views[_selected], _tube_views[index], amount, color)
 			_update_controls()
 			return
-		_reject_tube(index, "That tube cannot receive this color. Choose another.")
+		if not _rules.layers_at(index).is_empty():
+			_selected = index
+			_status.text = "Tap an empty tube or a matching top color."
+			_audio.play_effect(AudioManager.Effect.SELECT)
+		else:
+			_reject_tube(index, "That tube cannot receive this color. Choose another.")
 	_refresh()
 
 
@@ -344,6 +377,8 @@ func _advance_level() -> void:
 func _clear_selection() -> void:
 	_selected = -1
 	_status.text = SELECT_SOURCE
+	if _active_level().get("mystery", false) and _rules.move_count() == 0:
+		_status.text = "Pour the top color to reveal a ? layer."
 
 
 func _refresh() -> void:
@@ -352,11 +387,21 @@ func _refresh() -> void:
 	if not complete and _victory_tween != null:
 		_victory_tween.kill()
 		_victory_tween = null
+	var filled := 0
+	var tube_size := _tube_size
+	if complete and _rows.get_child_count() > 1:
+		tube_size.y = 110 if _rows.get_child_count() > 2 else 132
 	for index in range(_tube_views.size()):
-		_tube_views[index].show_tube(index, _rules.layers_at(index), level.capacity,
-			index == _selected)
-	_moves.text = "Moves: %d" % _rules.move_count()
-	_wallet.text = "%d coins" % _progress.coins
+		_tube_views[index].custom_minimum_size = tube_size
+		var layers := _rules.layers_at(index)
+		_tube_views[index].show_tube(index, layers, level.capacity, index == _selected)
+		if layers.size() == level.capacity and layers.count(layers[0]) == level.capacity:
+			filled += 1
+	_goal_progress.value = filled
+	_goal_status.text = "Sort the colors   ·   %d/%d complete" % [filled, int(_goal_progress.max_value)]
+	_moves.text = str(_rules.move_count())
+	_moves.accessibility_name = "Moves: " + _moves.text
+	_show_wallet(_progress.coins)
 	_save_status.text = _progress.save_warning
 	_save_status.visible = not _progress.save_warning.is_empty()
 	_update_controls()
@@ -407,7 +452,8 @@ func _reveal_victory() -> void:
 
 
 func _show_wallet(amount: float) -> void:
-	_wallet.text = "%d coins" % roundi(amount)
+	_wallet.text = str(roundi(amount))
+	_wallet.accessibility_name = "Coins: " + _wallet.text
 
 
 func _busy() -> bool:
@@ -422,7 +468,8 @@ func _apply_settings() -> void:
 
 
 func _apply_appearance() -> void:
-	_background.self_modulate = Color("#d9fff0") if _progress.theme_id == "seafoam" else Color.WHITE
+	var backdrop := _background.material as ShaderMaterial
+	backdrop.set_shader_parameter("seafoam", _progress.theme_id == "seafoam")
 	var rim: Color = Rewards.item(_progress.rim_id).color
 	for tube in _tube_views:
 		tube.set_rim_color(rim)

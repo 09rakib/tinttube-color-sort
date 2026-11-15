@@ -3,6 +3,8 @@ config_version=5
 [application]
 
 config/name="TintTube — Color Sort Puzzle"
+config/icon="res://assets/tinttube-icon.svg"
+config/quit_on_go_back=false
 run/main_scene="res://scenes/main.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 
@@ -25,3 +27,4 @@ pointing/emulate_mouse_from_touch=true
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
 textures/default_filters/use_nearest_mipmap_filter=false
+textures/vram_compression/import_etc2_astc=true

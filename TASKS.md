@@ -34,13 +34,19 @@
 
 ## Next milestone — Monetization and QA
 
-- [ ] Integrate and test supported ads, prepare the billing interface, and run device regression tests.
+- [x] Select an Android AdMob plugin and connect the optional rewarded offer, consent, and wallet callbacks.
+- [x] Define the Play Billing interface for future paid products.
+- [x] Verify the rewarded demo ad and saved coins on Android after the UMP status update.
+- [x] Verify offline ad failure and retry, touch pours, background and resume, Undo, Restart, and the Level 1 save on an Android emulator.
+- [ ] Verify region-specific UMP forms with a configured test app and message.
+- [ ] Finish Android regressions, including physical device vibration and frame pacing.
 
 ## Later milestones
 
-- [ ] 7 · Configure release export, verify Play Console requirements, and prepare the signed Android release.
+- [x] 7 · Document Play Console and Android release checks.
+- [ ] 7 · Set the final application ID, configure release export, and verify the signed AAB.
 
 ## Release dependencies
 
-- Android export templates, SDK and JDK configuration, and device testing.
+- Physical Android device testing. The QA build was verified with the Godot 4.7.2 export templates, Android SDK, and JDK 17.
 - Final Android application ID and signing credentials before a signed release.

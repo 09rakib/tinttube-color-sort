@@ -16,6 +16,7 @@ const COLUMNS := 5
 
 var _buttons: Array[Button] = []
 var _pars: Array[int] = []
+var _mystery_levels: Array[bool] = []
 var _completed_style: StyleBoxFlat
 
 
@@ -53,6 +54,7 @@ func build(levels: Array[Dictionary]) -> void:
 		grid.add_child(tile)
 		_buttons.append(tile)
 		_pars.append(level.par_moves)
+		_mystery_levels.append(level.mystery)
 
 
 func show_progress(progress: Progress, active_level: int) -> void:
@@ -65,6 +67,8 @@ func show_progress(progress: Progress, active_level: int) -> void:
 		var best := progress.best_moves(level)
 		tile.disabled = not progress.can_play(level)
 		tile.text = "%02d" % level
+		if _mystery_levels[index]:
+			tile.text += " ?"
 		var description := "Available"
 		if tile.disabled:
 			description = "Locked"
@@ -78,6 +82,8 @@ func show_progress(progress: Progress, active_level: int) -> void:
 			description = "Current level"
 			tile.text += "\nPLAY"
 		tile.accessibility_name = "Level %d · %s" % [level, description]
+		if _mystery_levels[index]:
+			tile.accessibility_name += " · Mystery"
 		tile.tooltip_text = tile.accessibility_name
 	show()
 	_scroll.ensure_control_visible.call_deferred(_buttons[active_level - 1])

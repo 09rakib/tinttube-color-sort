@@ -152,16 +152,24 @@ func buy_hint() -> bool:
 	return _spend_and_save(Rewards.HINT_PRICE)
 
 
+func record_video_reward() -> bool:
+	return _change_coins_and_save(Rewards.VIDEO_REWARD)
+
+
 func _spend_and_save(cost: int) -> bool:
-	if _read_only or coins < cost:
+	return _change_coins_and_save(-cost)
+
+
+func _change_coins_and_save(delta: int) -> bool:
+	if _read_only or coins + delta < 0:
 		return false
 	var was_dirty := _dirty
-	coins -= cost
+	coins += delta
 	_dirty = true
 	_save()
 	if not _dirty:
 		return true
-	coins += cost
+	coins -= delta
 	_dirty = was_dirty
 	return false
 
