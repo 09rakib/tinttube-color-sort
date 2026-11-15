@@ -426,8 +426,6 @@ func _test_gameplay_scene(path: String) -> void:
 	var level_picker := board.get_node("%Levels") as Button
 	var level_select := board.get_node("%LevelSelect") as Control
 	var groups := level_select.get_node("%DifficultyGroups")
-	var level_one := groups.get_child(1).get_child(0) as Button
-	var level_two := groups.get_child(1).get_child(1) as Button
 	var back := level_select.get_node("%Back") as Button
 	var undo := board.get_node("%Undo") as Button
 	var restart := board.get_node("%Restart") as Button
@@ -437,10 +435,13 @@ func _test_gameplay_scene(path: String) -> void:
 	_check(rows.get_child_count() == 1 and level_picker.text == "Level 1", "Native board loads Level 1")
 	_check(board.get_node_or_null("%GoalStatus") == null and board.get_node("%Home").visible,
 		"The compact header keeps Home and gives the progress panel's space to the tubes")
+	_check(groups.get_child_count() == 0, "Startup defers building the level picker")
 	_click(level_picker)
 	await process_frame
 	await process_frame
 	_check(level_select.visible and groups.get_child_count() == 10, "Level selection shows five tier grids")
+	var level_one := groups.get_child(1).get_child(0) as Button
+	var level_two := groups.get_child(1).get_child(1) as Button
 	_check(not level_one.disabled and level_two.disabled, "Only Level 1 starts unlocked in the grid")
 	var scroll := level_select.get_node("%Scroll") as ScrollContainer
 	# Godot 4.7.2 uses emulated mouse events for native touchscreen scrolling.
@@ -490,6 +491,13 @@ func _test_gameplay_scene(path: String) -> void:
 	await process_frame
 	_click(board.get_node("%HintCancel") as Button)
 	_check(not prompt.visible and progress.coins == 100, "Cancel closes the hint without a charge")
+	_click(hint)
+	await process_frame
+	_click(show_hint)
+	board.notification(Node.NOTIFICATION_WM_GO_BACK_REQUEST)
+	await process_frame
+	_check(not prompt.visible and progress.coins == 100 and not hint.disabled,
+		"Android Back cancels an in-flight hint and releases the controls without charging")
 	_click(hint)
 	await process_frame
 	_click(show_hint)

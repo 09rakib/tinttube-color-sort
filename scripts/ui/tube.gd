@@ -138,7 +138,8 @@ func preview_liquid(delta: float, color: int) -> void:
 
 
 func _update_surface_motion() -> void:
-	set_process(not _reduced_motion and is_visible_in_tree() and _layers.size() + _liquid_delta > 0.0)
+	var moving_liquid := _layers.size() + _liquid_delta > 0.0 and (not _sealed or not is_zero_approx(_liquid_delta))
+	set_process(not _reduced_motion and is_visible_in_tree() and moving_liquid)
 
 
 func stop_feedback() -> void:

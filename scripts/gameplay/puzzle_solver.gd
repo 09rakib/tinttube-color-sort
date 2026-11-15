@@ -14,6 +14,7 @@ class Search:
 	var _parents := PackedInt32Array([-1])
 	var _moves: Array[Vector2i] = [Vector2i.ZERO]
 	var _visited := {}
+	var _tube_ids: Dictionary[Array, int] = {}
 	var _cursor := 0
 	var _expanded := 0
 	var _prioritize := false
@@ -61,10 +62,14 @@ class Search:
 
 	func _expand(board: Array) -> void:
 		var candidates: Array[Vector2i] = []
+		var open_tubes: Array[int] = []
+		for index in range(board.size()):
+			if board[index].size() < _capacity:
+				open_tubes.append(index)
 		for source in range(board.size()):
 			if board[source].is_empty():
 				continue
-			for destination in range(board.size()):
+			for destination in open_tubes:
 				var amount := Rules.legal_pour_amount(board, _capacity, source, destination)
 				if amount == 0:
 					continue
@@ -108,19 +113,22 @@ class Search:
 		result = {"status": status, "moves": moves, "explored": _expanded}
 		_boards.clear()
 		_visited.clear()
+		_tube_ids.clear()
 		_frontier.clear()
 
 
-	static func _key(tubes: Array) -> String:
-		var encoded := PackedStringArray()
-		for tube in tubes:
-			var layers := PackedStringArray()
-			for color in tube:
-				layers.append(str(color))
-			encoded.append(",".join(layers))
+	func _key(tubes: Array) -> PackedInt32Array:
+		var encoded := PackedInt32Array()
+		encoded.resize(tubes.size())
+		for index in range(tubes.size()):
+			var tube: Array = tubes[index]
+			# Search boards share unchanged tubes. Transfers copy the two tubes before writing.
+			if not _tube_ids.has(tube):
+				_tube_ids[tube] = _tube_ids.size()
+			encoded[index] = _tube_ids[tube]
 		# Equivalent tube permutations share a key. Moves keep real tube indices.
 		encoded.sort()
-		return "|".join(encoded)
+		return encoded
 
 
 static func solve(tubes: Array, capacity: int = 4, search_limit: int = DEFAULT_SEARCH_LIMIT) -> Dictionary:

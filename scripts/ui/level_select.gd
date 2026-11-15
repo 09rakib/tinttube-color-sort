@@ -35,6 +35,8 @@ func _ready() -> void:
 
 
 func build(levels: Array[Dictionary]) -> void:
+	if not _buttons.is_empty():
+		return
 	var previous := ""
 	var grid: GridContainer
 	for level in levels:

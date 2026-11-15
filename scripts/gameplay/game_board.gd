@@ -56,7 +56,7 @@ var _level_index := 0
 var _selected := -1
 var _victory_tween: Tween
 var _levels_from_home := false
-var _searching := false
+var _hint_search: Solver.Search
 var _hint_move := Vector2i(-1, -1)
 var _last_reward := 0
 var _daily_level := {}
@@ -95,7 +95,6 @@ func _ready() -> void:
 	_menu.appearance_changed.connect(_apply_appearance)
 	_menu.settings_changed.connect(_apply_settings)
 	_home.pressed.connect(_open_home)
-	_level_select.build(_levels)
 	_level_picker.pressed.connect(_open_levels)
 	_level_select.level_selected.connect(_choose_level)
 	_level_select.back_requested.connect(_back_from_levels)
@@ -117,6 +116,7 @@ func _notification(what: int) -> void:
 	if not is_node_ready():
 		return
 	if what == NOTIFICATION_APPLICATION_PAUSED:
+		_cancel_hint_search()
 		_audio.set_backgrounded(true)
 		_pour.settle()
 		_audio.stop_effects()
@@ -125,6 +125,8 @@ func _notification(what: int) -> void:
 	elif what == NOTIFICATION_WM_GO_BACK_REQUEST and _progress != null:
 		if _hint_dialog.visible:
 			_close_hint_dialog()
+		elif _hint_search != null:
+			_cancel_hint_search()
 		elif _level_select.visible:
 			_back_from_levels()
 		elif _menu.visible:
@@ -142,6 +144,7 @@ func _open_levels() -> void:
 	_levels_from_home = _menu.visible
 	_menu.hide()
 	_content.hide()
+	_level_select.build(_levels)
 	_level_select.show_progress(_progress, _level_index + 1)
 
 
@@ -454,7 +457,7 @@ func _show_wallet(amount: float) -> void:
 
 
 func _busy() -> bool:
-	return _pour.is_active() or _searching or _hint_dialog.visible
+	return _pour.is_active() or _hint_search != null or _hint_dialog.visible
 
 
 func _apply_settings() -> void:
@@ -494,23 +497,32 @@ func _close_hint_dialog() -> void:
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
-	if _hint_dialog.visible and event.is_action_pressed("ui_cancel"):
-		_close_hint_dialog()
+	if event.is_action_pressed("ui_cancel"):
+		if _hint_dialog.visible:
+			_close_hint_dialog()
+		elif _hint_search != null:
+			_cancel_hint_search()
+		else:
+			return
 		get_viewport().set_input_as_handled()
 
 
 func _find_hint() -> void:
 	if not _hint_dialog.visible or _hint_confirm.disabled:
 		return
-	_searching = true
+	var search := Solver.Search.new(_rules.snapshot(), _active_level().capacity, Solver.DEFAULT_SEARCH_LIMIT)
+	_hint_search = search
 	_hint_dialog.hide()
 	_status.text = "Finding the next move…"
 	_update_controls()
-	var search := Solver.Search.new(_rules.snapshot(), _active_level().capacity, Solver.DEFAULT_SEARCH_LIMIT)
-	await get_tree().process_frame
-	while not search.advance(96):
+	while search.result.is_empty():
 		await get_tree().process_frame
-	_searching = false
+		if _hint_search != search:
+			return
+		var deadline := Time.get_ticks_usec() + 3000
+		while not search.advance(8) and Time.get_ticks_usec() < deadline:
+			pass
+	_hint_search = null
 	var result := search.result
 	if result.status == Solver.Status.SOLVED and not result.moves.is_empty():
 		if _progress.buy_hint():
@@ -524,6 +536,14 @@ func _find_hint() -> void:
 		_status.text = "This arrangement has no solution. Try Undo or Restart."
 	else:
 		_status.text = "No hint found for this arrangement."
+	_refresh()
+
+
+func _cancel_hint_search() -> void:
+	if _hint_search == null:
+		return
+	_hint_search = null
+	_clear_selection()
 	_refresh()
 
 
