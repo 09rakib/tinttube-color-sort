@@ -326,7 +326,7 @@ func _test_progress(path: String) -> void:
 	reloaded = Progress.new(50, path)
 	_check(reloaded.current_level == 2 and reloaded.best_moves(1) == 6,
 		"Loading falls back to the last valid slot")
-	var newer := '{"version":4,"revision":4}'
+	var newer := '{"version":%d,"revision":4}' % (Progress.SCHEMA_VERSION + 1)
 	_write_text(slot_a, newer)
 	reloaded = Progress.new(50, path)
 	reloaded.record_win(2, 4)
@@ -420,9 +420,9 @@ func _test_daily(path: String) -> void:
 	_check(progress.coins == 160 and progress.rim_id == "rose" and not progress.settings.music
 		and not progress.settings.color_labels, "Version 2 wallet and preferences survive the upgrade")
 	progress.save_daily_board(sample)
-	_check(progress.record_daily_win(sample.date, 17) == 40 and progress.coins == 200,
-		"The daily first clear adds 40 coins")
-	_check(progress.record_daily_win(sample.date, 15) == 0 and progress.coins == 200,
+	_check(progress.record_daily_win(sample.date, 17) == 50 and progress.coins == 210,
+		"The daily first clear adds 50 coins")
+	_check(progress.record_daily_win(sample.date, 15) == 0 and progress.coins == 210,
 		"Replaying the same date updates the best without duplicating its reward")
 	progress.set_setting("color_labels", true)
 	progress.set_setting("reduced_motion", true)
@@ -432,6 +432,19 @@ func _test_daily(path: String) -> void:
 		and progress.settings.reduced_motion and progress.current_level == 1,
 		"Daily history and accessibility preferences save separately from campaign progress")
 	_check(progress.record_daily_win("2026-02-30", 3) == 0, "An invalid calendar date cannot award coins")
+	var initial_balance := progress.coins
+	_check(progress.daily_goals(sample.date).size() == 3 and progress.daily_goals(sample.date)[0].complete,
+		"Exactly three daily objectives appear and the daily puzzle is already credited")
+	for level in range(1, 4):
+		progress.record_win(level, 3, 3, sample.date)
+	_check(progress.coins == initial_balance + 190, "Three perfect clears earn campaign rewards and both daily bonuses")
+	progress = Progress.new(50, path)
+	for goal in progress.daily_goals(sample.date):
+		_check(goal.complete, "Daily objective completion survives a reload")
+	_check(progress.record_win(1, 3, 3, sample.date) == 0, "Daily goals cannot pay again after replay or reload")
+	for goal in progress.daily_goals("2027-01-01"):
+		_check(not goal.complete, "Each calendar date starts with fresh daily goals")
+	_check(not progress.buy_extra_glass() and progress.coins == 400, "An unaffordable glass leaves the wallet intact")
 
 
 func _test_gameplay_scene(path: String) -> void:
@@ -707,7 +720,7 @@ func _test_daily_scene(board: Control) -> void:
 		board.call("_on_tube_pressed", move.x)
 		board.call("_on_tube_pressed", move.y)
 		animation.settle()
-	_check(progress.daily_best(daily.date) == solution.moves.size() and progress.coins == wallet + 40,
+	_check(progress.daily_best(daily.date) == solution.moves.size() and progress.coins == wallet + 50,
 		"A daily victory saves its own result and coins")
 	board.call("_choose_level", 2)
 	_check(moves.text == "1" and progress.current_level == 2,
@@ -721,6 +734,22 @@ func _test_daily_scene(board: Control) -> void:
 		"Android Back from Settings returns to Home")
 	board.call("_choose_level", 2)
 	_check(moves.text == "1", "Android Back preserves the campaign attempt")
+	progress.coins = 500
+	menu.call("open", "shop", progress)
+	(menu.get("_glass_buy") as Button).pressed.emit()
+	_check(progress.coins == 0 and Progress.new(50, board.progress_path).extra_glasses == 1,
+		"The Shop saves a single 500-coin purchase")
+	board.call("_choose_level", 2)
+	var rules: RefCounted = board.get("_rules")
+	var count: int = rules.snapshot().size()
+	(board.get_node("%ExtraGlass") as Button).pressed.emit()
+	_check(rules.snapshot().size() == count + 1 and moves.text == "1" and progress.extra_glasses == 0,
+		"Using a purchased glass consumes it and preserves the active attempt")
+	board.call("_undo_move")
+	_check(rules.snapshot().size() == count + 1 and moves.text == "0", "Undo retains the added glass")
+	board.call("_restart_level")
+	_check(rules.snapshot().size() == count and Progress.new(50, board.progress_path).extra_glasses == 0,
+		"Restart removes the used glass without restoring it to the inventory")
 
 
 func _wait_for_pour(animation: Node) -> void:

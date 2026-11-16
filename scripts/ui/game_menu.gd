@@ -10,10 +10,40 @@ signal settings_changed
 const Progress = preload("res://scripts/services/player_progress.gd")
 const Rewards = preload("res://scripts/services/rewards.gd")
 const RewardedAds = preload("res://scripts/services/rewarded_ads.gd")
-const Tube = preload("res://scenes/gameplay/tube.tscn")
+const HOME_ART = preload("res://assets/theme/home-reference.png")
+const COIN_ART = preload("res://assets/theme/gameplay_coins.png")
+const VIOLET_GLASS = preload("res://assets/theme/glass_violet.png")
+const PEARL_GLASS = preload("res://assets/theme/glass_pearl.png")
+const ART_SHADER = preload("res://assets/theme/menu_art.gdshader")
+
+class MedalIcon extends Control:
+	var tint := Color("#a29ab5"):
+		set(value):
+			tint = value
+			queue_redraw()
+
+	func _draw() -> void:
+		var center := size / 2.0
+		for direction in [-1.0, 1.0]:
+			draw_colored_polygon(PackedVector2Array([
+				center + Vector2(direction * 3, 4),
+				center + Vector2(direction * 14, 4),
+				center + Vector2(direction * 19, 19),
+				center + Vector2(direction * 8, 16),
+			]), tint.darkened(0.22))
+		center.y -= 4
+		draw_circle(center, 15, tint.darkened(0.28), true, -1.0, true)
+		draw_circle(center, 12.5, tint, true, -1.0, true)
+		var star := PackedVector2Array()
+		for corner in range(10):
+			var radius := 8.0 if corner % 2 == 0 else 3.6
+			star.append(center + Vector2.from_angle(-PI / 2.0 + corner * TAU / 10.0) * radius)
+		draw_colored_polygon(star, tint.lightened(0.77))
+
 
 var _progress: Progress
-var _wallet: Label
+var _wallet: Button
+var _profile: Button
 var _warning: Label
 var _home: VBoxContainer
 var _settings: VBoxContainer
@@ -23,33 +53,51 @@ var _achievements: VBoxContainer
 var _daily_date: Label
 var _daily_details: Label
 var _daily_play: Button
+var _daily_rows: Array[Label] = []
 var _achievement_rows: Array[Label] = []
+var _medal_icons: Array[MedalIcon] = []
+var _medal_count: Label
 var _play: Button
 var _continue: Button
+var _continue_title: Label
+var _continue_count: Label
+var _continue_progress: ProgressBar
 var _title: Label
 var _back: Button
 var _toggles := {}
 var _item_buttons := {}
 var _shop_message: Label
+var _glass_stock: Label
+var _glass_buy: Button
 var _ads: RewardedAds
 var _ad_button: Button
 var _ad_message: Label
 var _ad_privacy: Button
-var _demo_tubes: Array[Button] = []
 
 
 func _ready() -> void:
-	add_theme_constant_override("separation", 15)
+	add_theme_constant_override("separation", 10)
 	var header := HBoxContainer.new()
-	header.add_theme_constant_override("separation", 12)
+	header.add_theme_constant_override("separation", 8)
 	add_child(header)
 	_back = _button(header, "Back", go_back)
-	_title = _label(header, "", 20, true)
+	_profile = _button(header, "", func() -> void: open("achievements", _progress))
+	_profile.icon = _art(Rect2(55, 32, 90, 90))
+	_profile.expand_icon = true
+	_profile.custom_minimum_size = Vector2(53, 49)
+	_profile.accessibility_name = "Player medals"
+	_style_button(_profile, true, 24)
+	_title = _label(header, "", 18, true)
+	_title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var badge := PanelContainer.new()
-	header.add_child(badge)
-	_wallet = _label(badge, "", 16, true)
-	_wallet.add_theme_color_override("font_color", Color("#875224"))
+	_title.add_theme_color_override("font_color", Color.WHITE)
+	_wallet = _button(header, "", func() -> void: open("shop", _progress))
+	_wallet.icon = COIN_ART
+	_wallet.expand_icon = true
+	_wallet.add_theme_constant_override("icon_max_width", 24)
+	_wallet.add_theme_font_size_override("font_size", 15)
+	_wallet.accessibility_name = "Coin balance and shop"
+	_style_button(_wallet, true, 23)
 	_warning = _label(self, "", 14)
 	_warning.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_warning.hide()
@@ -68,6 +116,7 @@ func open(page: String, progress: Progress) -> void:
 	_daily.visible = page == "daily"
 	_achievements.visible = page == "achievements"
 	_back.visible = page != "home"
+	_profile.visible = page == "home"
 	_title.text = "" if page == "home" else ("Daily Challenge" if page == "daily" else page.capitalize())
 	_shop_message.text = ""
 	_refresh()
@@ -92,50 +141,149 @@ func go_back() -> bool:
 
 
 func _build_home() -> void:
-	_home = _column(self, 14)
+	_home = _column(self, 13)
 	_home.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	var hero := _column(_home, 6)
+	var hero := _masked_art(Rect2(0, 24, 1024, 699), Vector2(0, 218), true)
 	hero.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	hero.alignment = BoxContainer.ALIGNMENT_CENTER
-	var art := HBoxContainer.new()
-	art.alignment = BoxContainer.ALIGNMENT_CENTER
-	hero.add_child(art)
-	var samples := [[1, 1, 0], [4, 4, 3, 3], [5, 2, 2]]
-	for index in range(samples.size()):
-		var tube := Tube.instantiate()
-		tube.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		tube.focus_mode = Control.FOCUS_NONE
-		art.add_child(tube)
-		tube.show_tube(index, samples[index], 4, false)
-		tube.set_pose(Vector2(0, -5 if index == 1 else 0), deg_to_rad((index - 1) * 10.0))
-		_demo_tubes.append(tube)
-	var brand := _label(hero, "TintTube", 50, true)
-	brand.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	brand.add_theme_color_override("font_color", Color("#5141af"))
-	var subtitle := _label(hero, "Color Sort Puzzle", 19)
-	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hero.accessibility_name = "TintTube Color Sort Puzzle"
+	_home.add_child(hero)
 
-	_play = _button(_home, "Play", func() -> void: play_requested.emit(_progress.unlocked_level()))
-	_play.custom_minimum_size.y = 64
-	_continue = _button(_home, "Continue", func() -> void: play_requested.emit(_progress.current_level))
-	_continue.theme_type_variation = &"SecondaryButton"
+	_play = _button(_home, "▶   Play Now", func() -> void: play_requested.emit(_progress.unlocked_level()))
+	_play.custom_minimum_size.y = 68
+	_play.add_theme_font_size_override("font_size", 29)
+	_glossy_button(_play, true)
+	_continue = _button(_home, "", func() -> void: play_requested.emit(_progress.current_level))
+	_continue.custom_minimum_size.y = 77
+	_glossy_button(_continue, false)
+	var resume := HBoxContainer.new()
+	resume.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	resume.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	resume.offset_left = 11
+	resume.offset_right = -15
+	resume.add_theme_constant_override("separation", 7)
+	_continue.add_child(resume)
+	resume.add_child(_masked_art(Rect2(107, 885, 132, 115), Vector2(52, 0)))
+	var progress := _column(resume, 4)
+	progress.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	progress.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	progress.alignment = BoxContainer.ALIGNMENT_CENTER
+	_continue_title = _label(progress, "", 19, true)
+	_continue_title.add_theme_color_override("font_color", Color("#34146a"))
+	var progress_row := HBoxContainer.new()
+	progress_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	progress.add_child(progress_row)
+	_continue_progress = ProgressBar.new()
+	_continue_progress.custom_minimum_size.y = 14
+	_continue_progress.show_percentage = false
+	_continue_progress.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_continue_progress.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_continue_progress.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_continue_progress.add_theme_stylebox_override("background", _surface(Color("#ddd0f6"), Color("#efe4ff"), 8, false))
+	_continue_progress.add_theme_stylebox_override("fill", _surface(Color("#8541e4"), Color("#bb86ff"), 8, false))
+	progress_row.add_child(_continue_progress)
+	_continue_count = _label(progress_row, "", 13, true)
+	_continue_count.add_theme_color_override("font_color", Color("#552499"))
+	var arrow := _label(resume, "›", 34, true)
+	arrow.add_theme_color_override("font_color", Color("#7033c7"))
 	var actions := HBoxContainer.new()
-	actions.add_theme_constant_override("separation", 10)
+	actions.add_theme_constant_override("separation", 11)
 	_home.add_child(actions)
-	_button(actions, "Levels", func() -> void: levels_requested.emit())
-	_button(actions, "Shop", func() -> void: open("shop", _progress))
-	_button(actions, "Settings", func() -> void: open("settings", _progress))
-	for button in actions.get_children():
-		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		button.theme_type_variation = &"SecondaryButton"
+	_home_tile(actions, "Levels", Rect2(140, 1053, 132, 110), func() -> void: levels_requested.emit())
+	_home_tile(actions, "Shop", Rect2(445, 1056, 134, 106), func() -> void: open("shop", _progress))
+	_home_tile(actions, "Settings", Rect2(758, 1057, 110, 107), func() -> void: open("settings", _progress))
 	var challenges := HBoxContainer.new()
-	challenges.add_theme_constant_override("separation", 10)
+	challenges.add_theme_constant_override("separation", 11)
 	_home.add_child(challenges)
-	_button(challenges, "Daily Challenge", func() -> void: daily_requested.emit())
-	_button(challenges, "Achievements", func() -> void: open("achievements", _progress))
-	for button in challenges.get_children():
-		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		button.theme_type_variation = &"SecondaryButton"
+	_home_tile(challenges, "Daily Challenge", Rect2(124, 1288, 119, 117), func() -> void: daily_requested.emit())
+	_home_tile(challenges, "Achievements", Rect2(538, 1291, 136, 111), func() -> void: open("achievements", _progress))
+
+
+func _home_tile(parent: Node, title: String, region: Rect2, action: Callable) -> void:
+	var button := _button(parent, "", action)
+	button.custom_minimum_size.y = 92
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.accessibility_name = title
+	_glossy_button(button, false)
+	var contents := VBoxContainer.new()
+	contents.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	contents.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	contents.alignment = BoxContainer.ALIGNMENT_CENTER
+	contents.add_theme_constant_override("separation", 1)
+	button.add_child(contents)
+	var icon := _masked_art(region.grow(4.0), Vector2(68, 57))
+	icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	contents.add_child(icon)
+	var label := _label(contents, title, 17, true)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.add_theme_color_override("font_color", Color("#331461"))
+
+
+func _art(region: Rect2) -> AtlasTexture:
+	var texture := AtlasTexture.new()
+	texture.atlas = HOME_ART
+	texture.region = region
+	texture.filter_clip = true
+	return texture
+
+
+func _masked_art(region: Rect2, minimum: Vector2, hero := false) -> ColorRect:
+	var art := ColorRect.new()
+	var material := ShaderMaterial.new()
+	material.shader = ART_SHADER
+	material.set_shader_parameter("artwork", HOME_ART)
+	material.set_shader_parameter("region", Vector4(region.position.x, region.position.y, region.size.x, region.size.y))
+	material.set_shader_parameter("hero", hero)
+	art.material = material
+	art.custom_minimum_size = minimum
+	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	art.resized.connect(func() -> void: material.set_shader_parameter("control_size", art.size))
+	return art
+
+
+func _glossy_button(button: Button, purple: bool) -> void:
+	_set_button_ink(button, Color.WHITE if purple else Color("#34146a"))
+	for state in [&"normal", &"hover", &"pressed"]:
+		var style := StyleBoxTexture.new()
+		style.texture = VIOLET_GLASS if purple else PEARL_GLASS
+		for side in [SIDE_LEFT, SIDE_TOP, SIDE_RIGHT, SIDE_BOTTOM]:
+			style.set_texture_margin(side, 26.0 if side == SIDE_BOTTOM else 21.0)
+			style.set_expand_margin(side, 10.0 if side == SIDE_BOTTOM else 5.0)
+			style.set_content_margin(side, 12.0)
+		if state == &"hover":
+			style.modulate_color = Color("#fff4ff")
+		elif state == &"pressed":
+			style.modulate_color = Color("#dfc7ff")
+		button.add_theme_stylebox_override(state, style)
+
+
+func _set_button_ink(button: Button, ink: Color) -> void:
+	button.add_theme_color_override("font_color", ink)
+	button.add_theme_color_override("font_hover_color", ink)
+	button.add_theme_color_override("font_pressed_color", ink)
+
+
+func _style_button(button: Button, purple: bool, radius: int) -> void:
+	var normal := Color("#6f25c6") if purple else Color("#f1e2ff")
+	_set_button_ink(button, Color.WHITE if purple else Color("#34146a"))
+	button.add_theme_stylebox_override("normal", _surface(normal, Color.WHITE, radius))
+	button.add_theme_stylebox_override("hover", _surface(normal.lightened(0.14), Color.WHITE, radius))
+	button.add_theme_stylebox_override("pressed", _surface(normal.darkened(0.12), Color.WHITE, radius))
+
+
+func _surface(fill: Color, edge: Color, radius: int, shadow := true) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = fill
+	style.border_color = edge
+	style.set_border_width_all(2)
+	style.border_width_bottom = 3
+	style.set_corner_radius_all(radius)
+	if shadow:
+		style.shadow_color = Color("#35136b70")
+		style.shadow_offset = Vector2(0, 4)
+		style.shadow_size = 6
+	style.content_margin_left = 12
+	style.content_margin_right = 12
+	return style
 
 
 func _build_settings() -> void:
@@ -180,10 +328,29 @@ func _build_daily() -> void:
 	_daily_details = _label(card, "", 17)
 	_daily_details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_daily_play = _button(card, "Play challenge", func() -> void: daily_play_requested.emit())
+	for index in range(3):
+		var objective := _card(_daily)
+		var row := _label(objective, "", 17, true)
+		row.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_daily_rows.append(row)
+	var rollover := Timer.new()
+	rollover.wait_time = 15.0
+	rollover.autostart = true
+	rollover.timeout.connect(func() -> void:
+		if _daily.is_visible_in_tree() and _daily_date.text != Time.get_date_string_from_system():
+			daily_requested.emit()
+	)
+	_daily.add_child(rollover)
 
 
 func show_daily(date: String, board: Dictionary, preparing: bool) -> void:
 	_daily_date.text = date
+	var goals := _progress.daily_goals(date)
+	for index in range(goals.size()):
+		var goal := goals[index]
+		_daily_rows[index].text = "%s\n%s   ·   %d coins" % [goal.title,
+			"✓ Completed" if goal.complete else "%d / %d" % [goal.value, goal.target],
+			Rewards.DAILY_REWARD]
 	_daily_play.disabled = board.is_empty()
 	if preparing:
 		_daily_details.text = "Preparing today’s puzzle…"
@@ -192,31 +359,47 @@ func show_daily(date: String, board: Dictionary, preparing: bool) -> void:
 	else:
 		var best := _progress.daily_best(date)
 		_daily_play.text = "Replay challenge" if best > 0 else "Play challenge"
-		_daily_details.text = "Medium · %d-move target\n" % board.par_moves
-		_daily_details.text += ("Completed · Best %d moves" % best) if best > 0 else ("First clear earns %d coins" % Rewards.DAILY_REWARD)
+		_daily_details.text = "Medium · %d-move target" % board.par_moves
+		if best > 0:
+			_daily_details.text += "\nBest: %d moves" % best
 
 
 func _build_achievements() -> void:
 	_achievements = _column(self, 13)
 	_achievements.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	for title in ["First Sort", "Ten Levels", "Daily Debut", "Daily Regular"]:
-		var card := _card(_achievements)
-		_label(card, title, 20, true)
-		_achievement_rows.append(_label(card, "", 16))
+	_medal_count = _label(_achievements, "", 20, true)
+	_medal_count.add_theme_color_override("font_color", Color.WHITE)
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_achievements.add_child(scroll)
+	var medals := _column(scroll, 10)
+	medals.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	for medal in Rewards.MEDALS:
+		var card := _card(medals)
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 12)
+		card.add_child(row)
+		var icon := MedalIcon.new()
+		icon.custom_minimum_size = Vector2(48, 44)
+		row.add_child(icon)
+		_medal_icons.append(icon)
+		var details := _column(row, 1)
+		_label(details, medal[0], 20, true)
+		_achievement_rows.append(_label(details, "", 15))
 
 
 func _update_achievements() -> void:
 	var completed := _progress.completed_count()
-	var dailies := _progress.daily_count()
-	var rows := [[completed, 1, "Campaign levels"], [completed, 10, "Campaign levels"],
-		[dailies, 1, "Daily challenges"], [dailies, 7, "Daily challenges"]]
-	for index in range(rows.size()):
-		var data: Array = rows[index]
-		var unlocked: bool = data[0] >= data[1]
-		_achievement_rows[index].text = "%s · %d/%d %s" % [
-			"Unlocked" if unlocked else "Locked", mini(data[0], data[1]), data[1], data[2]]
-		_achievement_rows[index].add_theme_color_override("font_color",
-			Color("#06756f") if unlocked else Color("#554a73"))
+	var earned := 0
+	for index in range(Rewards.MEDALS.size()):
+		var medal: Array = Rewards.MEDALS[index]
+		var unlocked: bool = completed >= medal[2]
+		earned += int(unlocked)
+		_medal_icons[index].tint = Color(medal[3]) if unlocked else Color("#a29ab5")
+		_achievement_rows[index].text = "Levels %d–%d · %s" % [
+			medal[1], medal[2], "Earned" if unlocked else "Locked"]
+	_medal_count.text = "%d / %d medals earned" % [earned, Rewards.MEDALS.size()]
 
 
 func _build_shop() -> void:
@@ -233,6 +416,13 @@ func _build_shop() -> void:
 	_ad_message = _label(items, "", 14)
 	_ad_message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_ad_message.hide()
+	var glass := _card(items)
+	_label(glass, "Extra Glass", 21, true)
+	var description := _label(glass, "Adds one empty glass to your current attempt. Each glass can be used once.", 16)
+	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_glass_stock = _label(glass, "", 16)
+	_glass_buy = _button(glass, "Buy · %d coins" % Rewards.EXTRA_GLASS_PRICE, _buy_glass)
+	_style_button(_glass_buy, true, 19)
 	for kind in ["Theme", "Rim"]:
 		_label(items, "Themes" if kind == "Theme" else "Glass rims", 19, true)
 		for item in Rewards.ITEMS:
@@ -289,12 +479,27 @@ func _buy_or_equip(id: String) -> void:
 	_refresh()
 
 
+func _buy_glass() -> void:
+	if _progress.buy_extra_glass():
+		_shop_message.text = "Extra glass added. Use it during a puzzle."
+	elif _progress.coins < Rewards.EXTRA_GLASS_PRICE:
+		_shop_message.text = "You need %d coins to buy an extra glass." % Rewards.EXTRA_GLASS_PRICE
+	else:
+		_shop_message.text = "The purchase could not be saved."
+	_refresh()
+
+
 func _refresh() -> void:
-	_wallet.text = "%d coins" % _progress.coins
+	_wallet.text = "%d Coins   +" % _progress.coins
 	_warning.text = _progress.save_warning
 	_warning.visible = not _progress.save_warning.is_empty()
-	_continue.visible = _progress.completed_count() > 0
-	_continue.text = "Continue · Level %d" % _progress.current_level
+	_continue_title.text = "Continue · Level %d" % _progress.current_level
+	_continue.accessibility_name = _continue_title.text
+	_continue_count.text = "%d / %d" % [_progress.completed_count(), _progress.level_count()]
+	_continue_progress.max_value = _progress.level_count()
+	_continue_progress.value = _progress.completed_count()
+	_continue_progress.accessibility_name = "%d of %d levels completed" % [_progress.completed_count(), _progress.level_count()]
+	_glass_stock.text = "%d owned" % _progress.extra_glasses
 	_update_achievements()
 	for key in _toggles:
 		_toggles[key].set_pressed_no_signal(_progress.settings[key])
@@ -303,9 +508,6 @@ func _refresh() -> void:
 		var equipped: bool = item.id == _progress.theme_id or item.id == _progress.rim_id
 		button.disabled = equipped
 		button.text = "Equipped" if equipped else ("Equip" if _progress.owns(item.id) else "%d coins" % item.price)
-	for tube in _demo_tubes:
-		tube.set_rim_color(Rewards.item(_progress.rim_id).color)
-		tube.apply_accessibility(false, _progress.settings.reduced_motion)
 
 
 func _card(parent: Node) -> VBoxContainer:

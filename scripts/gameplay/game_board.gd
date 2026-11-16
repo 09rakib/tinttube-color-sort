@@ -28,6 +28,7 @@ const SELECT_SOURCE := "Tap a tube to select its top color."
 @onready var _status: Label = %Status
 @onready var _undo: Button = %Undo
 @onready var _restart: Button = %Restart
+@onready var _extra_glass: Button = %ExtraGlass
 @onready var _victory: Control = %VictoryOverlay
 @onready var _victory_title: Label = %VictoryTitle
 @onready var _next_level: Button = %NextLevel
@@ -44,6 +45,7 @@ const SELECT_SOURCE := "Tap a tube to select its top color."
 @onready var _stars: StarRating = %Stars
 @onready var _reward_label: Label = %Reward
 @onready var _background: ColorRect = $Background
+@onready var _menu_backdrop: ColorRect = $MenuBackdrop
 
 @export var start_at_home := false
 var _rules := Rules.new()
@@ -66,6 +68,8 @@ var _campaign_rules: Rules
 
 
 func _ready() -> void:
+	_menu.visibility_changed.connect(_update_menu_backdrop)
+	_level_select.visibility_changed.connect(_update_menu_backdrop)
 	resized.connect(_pour.settle)
 	_pour.finished.connect(_finish_pour)
 	_pour.stream_started.connect(_audio.play_pour)
@@ -100,6 +104,7 @@ func _ready() -> void:
 	_level_select.back_requested.connect(_back_from_levels)
 	_undo.pressed.connect(_undo_move)
 	_restart.pressed.connect(_restart_level)
+	_extra_glass.pressed.connect(_use_extra_glass)
 	_next_level.pressed.connect(_advance_level)
 	_content.visibility_changed.connect(_sync_victory_visibility)
 	_hint.text = "Hint · %d" % Rewards.HINT_PRICE
@@ -110,6 +115,10 @@ func _ready() -> void:
 	_load_level(_progress.current_level - 1)
 	if start_at_home:
 		_open_home()
+
+
+func _update_menu_backdrop() -> void:
+	_menu_backdrop.visible = _menu.visible or _level_select.visible
 
 
 func _notification(what: int) -> void:
@@ -266,10 +275,16 @@ func _build_board(level: Dictionary) -> void:
 		old_row.queue_free()
 	_tube_views.clear()
 
-	var tube_count: int = level.tubes.size()
-	var row_count := ceili(float(tube_count) / COLUMNS)
+	var tube_count := _rules.snapshot().size()
+	var max_columns := COLUMNS + 1 if tube_count > COLUMNS * 3 else COLUMNS
+	var row_count := ceili(float(tube_count) / max_columns)
 	var column_count := ceili(float(tube_count) / row_count)
 	_tube_size = Vector2(82, 204) if column_count <= 3 and row_count <= 2 else Vector2(72, 186)
+	if column_count > COLUMNS:
+		_tube_size.x = 60
+	var row_gap := 18 if column_count <= 3 else 9
+	if column_count > COLUMNS:
+		row_gap = 7
 	if row_count > 2:
 		_tube_size.y = 166
 	_tube_size.y += 6 * (level.capacity - Rules.DEFAULT_CAPACITY)
@@ -278,7 +293,7 @@ func _build_board(level: Dictionary) -> void:
 		if tube_index % column_count == 0:
 			row = HBoxContainer.new()
 			row.alignment = BoxContainer.ALIGNMENT_CENTER
-			row.add_theme_constant_override("separation", 18 if column_count <= 3 else 9)
+			row.add_theme_constant_override("separation", row_gap)
 			_rows.add_child(row)
 		var tube := TubeScene.instantiate() as TubeView
 		tube.custom_minimum_size = _tube_size
@@ -318,7 +333,7 @@ func _on_tube_pressed(index: int) -> void:
 			if _rules.is_level_complete():
 				if _daily_level.is_empty():
 					_last_reward = _progress.record_win(_level_index + 1, _rules.move_count(),
-						_levels[_level_index].par_moves)
+						_levels[_level_index].par_moves, Time.get_date_string_from_system())
 				else:
 					_last_reward = _progress.record_daily_win(_daily_level.date, _rules.move_count())
 			_status.text = "Pouring…"
@@ -360,11 +375,26 @@ func _restart_level() -> void:
 	if _busy():
 		return
 	_audio.play_effect(AudioManager.Effect.BUTTON)
+	var had_extra_glass := _rules.has_extra_glass()
 	_rules.restart_level()
+	if had_extra_glass:
+		_build_board(_active_level())
+		return
 	_last_reward = 0
 	_clear_hint()
 	_clear_selection()
 	_refresh()
+
+
+func _use_extra_glass() -> void:
+	if _busy() or not _content.visible or _rules.is_level_complete() or _rules.has_extra_glass():
+		return
+	if not _progress.use_extra_glass():
+		_refresh()
+		return
+	_rules.add_extra_glass()
+	_build_board(_active_level())
+	_status.text = "Extra glass added for this attempt."
 
 
 func _advance_level() -> void:
@@ -439,8 +469,11 @@ func _update_controls() -> void:
 	_level_picker.disabled = tubes_disabled
 	_home.disabled = tubes_disabled
 	_hint.disabled = tubes_disabled or _hint_move.x >= 0
+	_extra_glass.visible = _progress.extra_glasses > 0 or _rules.has_extra_glass()
+	_extra_glass.disabled = tubes_disabled or _rules.has_extra_glass()
+	_extra_glass.text = "Extra glass added" if _rules.has_extra_glass() else "Use extra glass · %d owned" % _progress.extra_glasses
 	_undo.disabled = tubes_disabled or count == 0
-	_restart.disabled = tubes_disabled or (count == 0 and _selected < 0)
+	_restart.disabled = tubes_disabled or (count == 0 and _selected < 0 and not _rules.has_extra_glass())
 
 
 func _reveal_victory() -> void:

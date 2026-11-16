@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=3]
+[gd_scene load_steps=24 format=3]
 
 [ext_resource type="Script" path="res://scripts/gameplay/game_board.gd" id="1"]
 [ext_resource type="Theme" path="res://assets/theme/tinttube.tres" id="2"]
@@ -15,6 +15,10 @@
 
 [ext_resource type="Texture2D" path="res://assets/theme/gameplay_moves.png" id="12"]
 [ext_resource type="Texture2D" path="res://assets/theme/gameplay_coins.png" id="13"]
+[ext_resource type="Shader" path="res://assets/theme/menu_backdrop.gdshader" id="14"]
+
+[sub_resource type="ShaderMaterial" id="MenuBackdrop"]
+shader = ExtResource("14")
 
 [sub_resource type="ShaderMaterial" id="GlassBackdrop"]
 shader = ExtResource("9")
@@ -152,6 +156,17 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 material = SubResource("GlassBackdrop")
+
+[node name="MenuBackdrop" type="ColorRect" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+material = SubResource("MenuBackdrop")
 
 [node name="SafeArea" type="MarginContainer" parent="."]
 unique_name_in_owner = true
@@ -350,6 +365,14 @@ theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
 theme_override_colors/font_focus_color = Color(1, 1, 1, 1)
 theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+
+[node name="ExtraGlass" type="Button" parent="SafeArea/Content"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_type_variation = &"SecondaryButton"
+text = "Use extra glass"
 
 [node name="LevelSelect" parent="SafeArea" instance=ExtResource("6")]
 unique_name_in_owner = true

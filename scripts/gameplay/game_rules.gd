@@ -65,6 +65,18 @@ func restart_level() -> void:
 	_history.clear()
 
 
+func has_extra_glass() -> bool:
+	return _tubes.size() > _initial.size()
+
+
+func add_extra_glass() -> void:
+	if has_extra_glass():
+		return
+	_tubes.append([])
+	for previous in _history:
+		previous.append([])
+
+
 func is_level_complete() -> bool:
 	return is_solved(_tubes, _capacity)
 

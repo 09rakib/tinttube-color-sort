@@ -3,7 +3,7 @@ extends RefCounted
 
 const Rewards = preload("res://scripts/services/rewards.gd")
 const Daily = preload("res://scripts/gameplay/daily_generator.gd")
-const SCHEMA_VERSION := 3
+const SCHEMA_VERSION := 4
 const DEFAULT_PATH := "user://tinttube-progress"
 const DEFAULT_SETTINGS := {
 	"music": true, "effects": true, "vibration": true,
@@ -16,11 +16,13 @@ var coins := Rewards.STARTING_COINS
 var settings := DEFAULT_SETTINGS.duplicate()
 var theme_id := "lavender"
 var rim_id := "aqua"
+var extra_glasses := 0
 
 var _best_moves: Array[int] = []
 var _owned: Array[String] = ["lavender", "aqua"]
 var _daily_wins := {}
 var _daily_board := {}
+var _daily_campaign := {}
 var _level_count: int
 var _base_path: String
 var _revision := 0
@@ -43,6 +45,10 @@ func completed_count() -> int:
 	return _best_moves.size()
 
 
+func level_count() -> int:
+	return _level_count
+
+
 func can_play(level: int) -> bool:
 	return level >= 1 and level <= unlocked_level()
 
@@ -63,7 +69,7 @@ func select_level(level: int) -> bool:
 	return true
 
 
-func record_win(level: int, moves: int, par: int = 0) -> int:
+func record_win(level: int, moves: int, par: int = 0, date := "") -> int:
 	if not can_play(level) or moves <= 0:
 		return 0
 	var previous := best_moves(level)
@@ -77,6 +83,19 @@ func record_win(level: int, moves: int, par: int = 0) -> int:
 		_dirty = true
 	if Rewards.stars(moves, par) == 3 and Rewards.stars(previous, par) < 3:
 		reward += Rewards.PERFECT_BONUS
+	if Daily.valid_date(date):
+		var results: Dictionary = _daily_campaign.get(date, {})
+		var rating := Rewards.stars(moves, par)
+		var key := str(level)
+		if rating > int(results.get(key, 0)):
+			var before := _campaign_goals(date)
+			results[key] = rating
+			_daily_campaign[date] = results
+			var after := _campaign_goals(date)
+			for index in range(after.size()):
+				if after[index].complete and not before[index].complete:
+					reward += Rewards.DAILY_REWARD
+			_dirty = true
 	coins += reward
 	_save()
 	return reward
@@ -105,6 +124,47 @@ func daily_count() -> int:
 
 func daily_best(date: String) -> int:
 	return _daily_wins.get(date, 0)
+
+
+func daily_goals(date: String) -> Array[Dictionary]:
+	var goals := _campaign_goals(date)
+	var cleared := daily_best(date) > 0
+	goals.push_front(_goal("Solve today’s puzzle", int(cleared), 1))
+	return goals
+
+
+func _campaign_goals(date: String) -> Array[Dictionary]:
+	# Keep a date's goals stable across launches so rewards cannot be earned twice.
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(date)
+	var clear_target := rng.randi_range(2, 3)
+	var star_target := rng.randi_range(3, 6)
+	var perfect_target := maxi(1, star_target - 3)
+	var results: Dictionary = _daily_campaign.get(date, {})
+	var stars := 0
+	var strong_clears := 0
+	var perfect_clears := 0
+	for rating: int in results.values():
+		stars += rating
+		strong_clears += int(rating >= 2)
+		perfect_clears += int(rating == 3)
+	var clear_goals := [
+		_goal("Clear %d different campaign levels" % clear_target, results.size(), clear_target),
+		_goal("Clear %d campaign levels with 2+ stars each" % clear_target, strong_clears, clear_target),
+	]
+	var star_goals := [
+		_goal("Earn %d stars across campaign levels" % star_target, stars, star_target),
+		_goal("Earn 3 stars on %d campaign %s" % [perfect_target, "level" if perfect_target == 1 else "levels"],
+			perfect_clears, perfect_target),
+	]
+	return [
+		clear_goals[rng.randi_range(0, clear_goals.size() - 1)],
+		star_goals[rng.randi_range(0, star_goals.size() - 1)],
+	]
+
+
+func _goal(title: String, value: int, target: int) -> Dictionary:
+	return {"title": title, "value": mini(value, target), "target": target, "complete": value >= target}
 
 
 func record_daily_win(date: String, moves: int) -> int:
@@ -150,6 +210,24 @@ func buy_or_equip(id: String) -> bool:
 
 func buy_hint() -> bool:
 	return _spend_and_save(Rewards.HINT_PRICE)
+
+
+func buy_extra_glass() -> bool:
+	extra_glasses += 1
+	if _spend_and_save(Rewards.EXTRA_GLASS_PRICE):
+		return true
+	extra_glasses -= 1
+	return false
+
+
+func use_extra_glass() -> bool:
+	if extra_glasses <= 0:
+		return false
+	extra_glasses -= 1
+	if _change_coins_and_save(0):
+		return true
+	extra_glasses += 1
+	return false
 
 
 func record_video_reward() -> bool:
@@ -212,6 +290,10 @@ func _load() -> void:
 		var parsed_daily := _parse_daily(raw, version)
 		if parsed_daily.is_empty():
 			continue
+		var glasses := _number(raw.get("extra_glasses")) if version >= 4 else 0
+		var daily_campaign: Variant = raw.get("daily_campaign") if version >= 4 else {}
+		if glasses < 0 or not _valid_daily_campaign(daily_campaign):
+			continue
 		if not _load_extras(raw, version, parsed_moves.size()):
 			continue
 		_revision = revision
@@ -220,6 +302,8 @@ func _load() -> void:
 		_best_moves = parsed_moves
 		_daily_wins = parsed_daily.wins
 		_daily_board = parsed_daily.board
+		extra_glasses = glasses
+		_daily_campaign = daily_campaign
 	if found_file and _active_slot < 0 and not _read_only:
 		_read_only = true
 		save_warning = "Progress could not be recovered. Saving is paused."
@@ -281,6 +365,21 @@ func _parse_daily(raw: Dictionary, version: int) -> Dictionary:
 	return {"wins": wins, "board": Daily.restore(cache)}
 
 
+func _valid_daily_campaign(source: Variant) -> bool:
+	if not source is Dictionary:
+		return false
+	for date in source:
+		if not date is String or not Daily.valid_date(date) or not source[date] is Dictionary:
+			return false
+		for key in source[date]:
+			var rating := _number(source[date][key])
+			if not key is String or not key.is_valid_int() or str(int(key)) != key \
+					or int(key) < 1 or int(key) > _level_count or rating < 1 or rating > 3:
+				return false
+			source[date][key] = rating
+	return true
+
+
 func _save() -> void:
 	if _read_only or not _dirty:
 		return
@@ -303,6 +402,8 @@ func _save() -> void:
 		"rim": rim_id,
 		"daily_wins": _daily_wins,
 		"daily_board": _daily_board,
+		"daily_campaign": _daily_campaign,
+		"extra_glasses": extra_glasses,
 	}))
 	file.flush()
 	var write_error := file.get_error()
