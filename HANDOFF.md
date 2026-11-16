@@ -2,6 +2,34 @@
 
 Milestone 5 is complete. Gameplay baseline is commit `10280f0` on `main`. TintTube is an offline-first portrait water-sort game built with Godot 4.7.2 Standard and the Compatibility renderer. [README.md](README.md) covers setup, [TASKS.md](TASKS.md) tracks the roadmap, and [DEVELOPMENT_LOG.md](DEVELOPMENT_LOG.md) records verification.
 
+## Git workflow for every coding task
+
+After every coding task, verify the changes, commit the files for that task, and push the commit to GitHub before reporting completion. The owner has already requested this as the default workflow for this repository, including work started in a new chat. The existing Windows checkout is `C:\Users\ASUS\Desktop\tinttube-color-sort`. The remote is `origin` (`https://github.com/09rakib/tinttube-color-sort.git`) and the target branch is `main`.
+
+Run these PowerShell commands from the checkout. Use the existing checkout when available. For a fresh checkout, run `git clone https://github.com/09rakib/tinttube-color-sort.git` and enter the resulting directory.
+
+```powershell
+Set-Location 'C:\Users\ASUS\Desktop\tinttube-color-sort'
+git status --short --branch
+git remote -v
+git fetch origin
+```
+
+Verify the current branch and check for existing work before editing. If `main` is behind and the checkout is clean, update it with `git pull --ff-only origin main`. Preserve existing edits. After making the changes and running the relevant checks, use the following sequence. Replace the example paths and commit message with the actual files and a description of the task. Check each command before proceeding.
+
+```powershell
+git diff --check
+git add -- scripts/gameplay/game_board.gd tests/run_core_tests.gd
+git diff --cached --check
+git diff --cached --stat
+git commit -m 'Describe the verified change'
+git push origin main
+git status --short --branch
+git rev-parse HEAD origin/main
+```
+
+Matching hashes in the final command confirm that the local commit and `origin/main` agree. Report the commit hash or GitHub commit link. If the push fails, surface the reason and preserve the local commit. Resolve any divergence before retrying and avoid force-pushing `main`. Keep generated builds, local tooling, and signing credentials outside the commit.
+
 ## What works
 
 - The campaign has 1,000 solver-verified puzzles, sequential unlocks, replay, undo, restart, and star ratings. Hard starts at level 36, and Expert starts at level 101. Each board from level 36 onward starts with two empty tubes. Super Hard levels end in 7 and require five matching layers per tube.
