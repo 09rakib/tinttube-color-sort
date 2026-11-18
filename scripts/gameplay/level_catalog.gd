@@ -9,16 +9,22 @@ const EXTRA_HARD_CAPACITY := 6
 
 
 static func campaign_capacity(id: int) -> int:
-	if id >= 101:
-		# The late campaign grows the physical puzzle depth in clear, learnable bands.
-		return 5 + mini(4, (id - 101) / 180)
-	var legacy_hard_level := id <= 100
+	if id >= 100:
+		# Level 100 opens the deep-glass campaign. Every 200 levels adds one layer.
+		if id <= 200:
+			return 5
+		return 6 + mini(3, (id - 201) / 200)
+	var legacy_hard_level := id < 100
 	var super_hard := legacy_hard_level and id % 10 == 7
 	var extra_mystery := legacy_hard_level and id % 20 == 14
 	var extra_hard := extra_mystery or (legacy_hard_level and id >= 13 and id % 10 == 3)
 	if extra_hard:
 		return EXTRA_HARD_CAPACITY
 	return SUPER_HARD_CAPACITY if super_hard else Rules.DEFAULT_CAPACITY
+
+
+static func is_super_hard(id: int) -> bool:
+	return id >= 801 or (id < 100 and id % 10 == 7)
 
 
 static func load_core_levels() -> Array[Dictionary]:
@@ -48,8 +54,8 @@ static func _parse_level(raw: Variant) -> Dictionary:
 	var par_moves := _unsigned_integer(raw.get("par_moves"))
 	var difficulty: Variant = raw.get("difficulty")
 	var raw_tubes: Variant = raw.get("tubes")
-	var legacy_hard_level := id <= 100
-	var super_hard := legacy_hard_level and id % 10 == 7
+	var legacy_hard_level := id < 100
+	var super_hard := is_super_hard(id)
 	var extra_mystery := legacy_hard_level and id % 20 == 14
 	var extra_hard := extra_mystery or (legacy_hard_level and id >= 13 and id % 10 == 3)
 	var expected_capacity := campaign_capacity(id)
