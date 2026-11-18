@@ -1,4 +1,4 @@
-[gd_scene load_steps=24 format=3]
+[gd_scene load_steps=28 format=3]
 
 [ext_resource type="Script" path="res://scripts/gameplay/game_board.gd" id="1"]
 [ext_resource type="Theme" path="res://assets/theme/tinttube.tres" id="2"]
@@ -137,6 +137,58 @@ shadow_color = Color(0.18, 0.08, 0.34, 0.52)
 shadow_size = 18
 shadow_offset = Vector2(0, 7)
 
+[sub_resource type="StyleBoxFlat" id="HeaderGlass"]
+content_margin_left = 8.0
+content_margin_right = 8.0
+content_margin_top = 7.0
+content_margin_bottom = 8.0
+bg_color = Color(0.95, 0.91, 1, 0.67)
+border_width_left = 1
+border_width_top = 2
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 1, 1, 0.75)
+corner_radius_top_left = 31
+corner_radius_top_right = 31
+corner_radius_bottom_left = 31
+corner_radius_bottom_right = 31
+shadow_color = Color(0.39, 0.21, 0.62, 0.18)
+shadow_size = 5
+shadow_offset = Vector2(0, 3)
+
+[sub_resource type="StyleBoxFlat" id="GoldWallet"]
+content_margin_left = 6.0
+content_margin_right = 4.0
+content_margin_top = 3.0
+content_margin_bottom = 3.0
+bg_color = Color(1, 0.92, 0.65, 1)
+border_width_left = 1
+border_width_top = 2
+border_width_right = 1
+border_width_bottom = 2
+border_color = Color(1, 0.82, 0.36, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_left = 20
+corner_radius_bottom_right = 20
+shadow_color = Color(0.67, 0.40, 0.12, 0.23)
+shadow_size = 4
+shadow_offset = Vector2(0, 2)
+
+[sub_resource type="StyleBoxFlat" id="WalletPlus"]
+bg_color = Color(0.08, 0.66, 0.35, 1)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_left = 14
+corner_radius_bottom_right = 14
+
+[sub_resource type="StyleBoxFlat" id="WalletPlusPressed"]
+bg_color = Color(0.05, 0.46, 0.27, 1)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_left = 14
+corner_radius_bottom_right = 14
+
 [node name="GameBoard" type="Control"]
 layout_mode = 3
 anchors_preset = 15
@@ -186,13 +238,17 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 14
 
-[node name="Header" type="HBoxContainer" parent="SafeArea/Content"]
+[node name="HeaderGlass" type="PanelContainer" parent="SafeArea/Content"]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_styles/panel = SubResource("HeaderGlass")
 
-[node name="Home" type="Button" parent="SafeArea/Content/Header"]
+[node name="Header" type="HBoxContainer" parent="SafeArea/Content/HeaderGlass"]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="Home" type="Button" parent="SafeArea/Content/HeaderGlass/Header"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(44, 42)
+custom_minimum_size = Vector2(34, 42)
 layout_mode = 2
 mouse_default_cursor_shape = 2
 tooltip_text = "Home"
@@ -208,19 +264,73 @@ theme_override_colors/font_hover_color = Color(0.30, 0.12, 0.53, 1)
 theme_override_colors/font_focus_color = Color(0.30, 0.12, 0.53, 1)
 theme_override_colors/font_pressed_color = Color(0.30, 0.12, 0.53, 1)
 
-[node name="LevelSlot" type="MarginContainer" parent="SafeArea/Content/Header"]
+[node name="LevelSlot" type="MarginContainer" parent="SafeArea/Content/HeaderGlass/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="Levels" type="Button" parent="SafeArea/Content/Header/LevelSlot"]
+[node name="Levels" type="Button" parent="SafeArea/Content/HeaderGlass/Header/LevelSlot"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(86, 40)
+custom_minimum_size = Vector2(69, 36)
 layout_mode = 2
-size_flags_horizontal = 0
+size_flags_horizontal = 1
 mouse_default_cursor_shape = 2
 tooltip_text = "Choose a level"
-theme_override_font_sizes/font_size = 15
+theme_override_font_sizes/font_size = 13
 text = "Level"
+theme_override_styles/normal = SubResource("Violet")
+theme_override_styles/hover = SubResource("Violet")
+theme_override_styles/pressed = SubResource("VioletPressed")
+theme_override_styles/disabled = SubResource("VioletDisabled")
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_colors/font_focus_color = Color(1, 1, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+
+[node name="MoveSlot" type="MarginContainer" parent="SafeArea/Content/HeaderGlass/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="MoveGlass" type="PanelContainer" parent="SafeArea/Content/HeaderGlass/Header/MoveSlot"]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_styles/panel = SubResource("Pearl")
+
+[node name="Counter" type="HBoxContainer" parent="SafeArea/Content/HeaderGlass/Header/MoveSlot/MoveGlass"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="Icon" type="TextureRect" parent="SafeArea/Content/HeaderGlass/Header/MoveSlot/MoveGlass/Counter"]
+custom_minimum_size = Vector2(14, 14)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("12")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Caption" type="Label" parent="SafeArea/Content/HeaderGlass/Header/MoveSlot/MoveGlass/Counter"]
+layout_mode = 2
+theme_type_variation = &"Heading"
+theme_override_colors/font_color = Color(0.28, 0.10, 0.48, 1)
+theme_override_font_sizes/font_size = 13
+text = "Move"
+
+[node name="Moves" type="Label" parent="SafeArea/Content/HeaderGlass/Header/MoveSlot/MoveGlass/Counter"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"Heading"
+theme_override_colors/font_color = Color(0.28, 0.10, 0.48, 1)
+theme_override_font_sizes/font_size = 13
+tooltip_text = "Moves"
+
+[node name="Restart" type="Button" parent="SafeArea/Content/HeaderGlass/Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(34, 42)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 22
+text = "↻"
+tooltip_text = "Restart"
+accessibility_name = "Restart"
 theme_override_styles/normal = SubResource("Pearl")
 theme_override_styles/hover = SubResource("Pearl")
 theme_override_styles/pressed = SubResource("PearlPressed")
@@ -230,69 +340,67 @@ theme_override_colors/font_hover_color = Color(0.30, 0.12, 0.53, 1)
 theme_override_colors/font_focus_color = Color(0.30, 0.12, 0.53, 1)
 theme_override_colors/font_pressed_color = Color(0.30, 0.12, 0.53, 1)
 
-[node name="MoveSlot" type="MarginContainer" parent="SafeArea/Content/Header"]
+[node name="CoinSlot" type="MarginContainer" parent="SafeArea/Content/HeaderGlass/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="MoveGlass" type="PanelContainer" parent="SafeArea/Content/Header/MoveSlot"]
-layout_mode = 2
-size_flags_horizontal = 4
-theme_override_styles/panel = SubResource("Pearl")
-
-[node name="Counter" type="HBoxContainer" parent="SafeArea/Content/Header/MoveSlot/MoveGlass"]
-layout_mode = 2
-theme_override_constants/separation = 4
-
-[node name="Icon" type="TextureRect" parent="SafeArea/Content/Header/MoveSlot/MoveGlass/Counter"]
-custom_minimum_size = Vector2(21, 21)
-layout_mode = 2
-mouse_filter = 2
-texture = ExtResource("12")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Moves" type="Label" parent="SafeArea/Content/Header/MoveSlot/MoveGlass/Counter"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_type_variation = &"Heading"
-theme_override_colors/font_color = Color(0.28, 0.10, 0.48, 1)
-theme_override_font_sizes/font_size = 15
-tooltip_text = "Moves"
-
-[node name="CoinSlot" type="MarginContainer" parent="SafeArea/Content/Header"]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="CoinGlass" type="PanelContainer" parent="SafeArea/Content/Header/CoinSlot"]
+[node name="CoinGlass" type="PanelContainer" parent="SafeArea/Content/HeaderGlass/Header/CoinSlot"]
 layout_mode = 2
 size_flags_horizontal = 8
-theme_override_styles/panel = SubResource("Pearl")
+theme_override_styles/panel = SubResource("GoldWallet")
 
-[node name="Counter" type="HBoxContainer" parent="SafeArea/Content/Header/CoinSlot/CoinGlass"]
+[node name="Counter" type="HBoxContainer" parent="SafeArea/Content/HeaderGlass/Header/CoinSlot/CoinGlass"]
 layout_mode = 2
-theme_override_constants/separation = 4
+theme_override_constants/separation = 3
 
-[node name="Icon" type="TextureRect" parent="SafeArea/Content/Header/CoinSlot/CoinGlass/Counter"]
-custom_minimum_size = Vector2(21, 21)
+[node name="Icon" type="TextureRect" parent="SafeArea/Content/HeaderGlass/Header/CoinSlot/CoinGlass/Counter"]
+custom_minimum_size = Vector2(14, 14)
 layout_mode = 2
 mouse_filter = 2
 texture = ExtResource("13")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Wallet" type="Label" parent="SafeArea/Content/Header/CoinSlot/CoinGlass/Counter"]
+[node name="Wallet" type="Label" parent="SafeArea/Content/HeaderGlass/Header/CoinSlot/CoinGlass/Counter"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"Heading"
 theme_override_colors/font_color = Color(0.45, 0.23, 0.06, 1)
-theme_override_font_sizes/font_size = 15
+theme_override_font_sizes/font_size = 13
 tooltip_text = "Coins"
 
-[node name="PlayArea" type="CenterContainer" parent="SafeArea/Content"]
+[node name="WalletShop" type="Button" parent="SafeArea/Content/HeaderGlass/Header/CoinSlot/CoinGlass/Counter"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(22, 22)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_styles/normal = SubResource("WalletPlus")
+theme_override_styles/hover = SubResource("WalletPlus")
+theme_override_styles/pressed = SubResource("WalletPlusPressed")
+theme_override_styles/disabled = SubResource("WalletPlusPressed")
+text = "+"
+tooltip_text = "Open Shop"
+accessibility_name = "Open Shop"
+
+[node name="PlayArea" type="ScrollContainer" parent="SafeArea/Content"]
 layout_mode = 2
 size_flags_vertical = 3
+horizontal_scroll_mode = 0
+follow_focus = true
+scroll_deadzone = 10
 
-[node name="TubeRows" type="VBoxContainer" parent="SafeArea/Content/PlayArea"]
+[node name="Center" type="CenterContainer" parent="SafeArea/Content/PlayArea"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+mouse_filter = 1
+
+[node name="TubeRows" type="VBoxContainer" parent="SafeArea/Content/PlayArea/Center"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 16
@@ -323,7 +431,7 @@ autowrap_mode = 2
 
 [node name="Undo" type="Button" parent="SafeArea/Content/Actions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(94, 52)
+custom_minimum_size = Vector2(70, 52)
 layout_mode = 2
 mouse_default_cursor_shape = 2
 text = "Undo"
@@ -336,26 +444,15 @@ theme_override_colors/font_hover_color = Color(0.30, 0.12, 0.53, 1)
 theme_override_colors/font_focus_color = Color(0.30, 0.12, 0.53, 1)
 theme_override_colors/font_pressed_color = Color(0.30, 0.12, 0.53, 1)
 
-[node name="Restart" type="Button" parent="SafeArea/Content/Actions"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(101, 52)
-layout_mode = 2
-mouse_default_cursor_shape = 2
-text = "Restart"
-theme_override_styles/normal = SubResource("Pearl")
-theme_override_styles/hover = SubResource("Pearl")
-theme_override_styles/pressed = SubResource("PearlPressed")
-theme_override_styles/disabled = SubResource("PearlDisabled")
-theme_override_colors/font_color = Color(0.30, 0.12, 0.53, 1)
-theme_override_colors/font_hover_color = Color(0.30, 0.12, 0.53, 1)
-theme_override_colors/font_focus_color = Color(0.30, 0.12, 0.53, 1)
-theme_override_colors/font_pressed_color = Color(0.30, 0.12, 0.53, 1)
-
 [node name="Hint" type="Button" parent="SafeArea/Content/Actions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(113, 52)
+custom_minimum_size = Vector2(88, 52)
 layout_mode = 2
 mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 15
+icon = ExtResource("13")
+expand_icon = true
+theme_override_constants/icon_max_width = 17
 text = "Hint"
 theme_override_styles/normal = SubResource("Violet")
 theme_override_styles/hover = SubResource("Violet")
@@ -366,13 +463,24 @@ theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
 theme_override_colors/font_focus_color = Color(1, 1, 1, 1)
 theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
 
-[node name="ExtraGlass" type="Button" parent="SafeArea/Content"]
+[node name="ExtraGlass" type="Button" parent="SafeArea/Content/Actions"]
 unique_name_in_owner = true
-visible = false
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(126, 52)
 layout_mode = 2
-theme_type_variation = &"SecondaryButton"
-text = "Use extra glass"
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 15
+icon = ExtResource("13")
+expand_icon = true
+theme_override_constants/icon_max_width = 17
+text = "Add Tube"
+theme_override_styles/normal = SubResource("Violet")
+theme_override_styles/hover = SubResource("Violet")
+theme_override_styles/pressed = SubResource("VioletPressed")
+theme_override_styles/disabled = SubResource("VioletDisabled")
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_colors/font_focus_color = Color(1, 1, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
 
 [node name="LevelSelect" parent="SafeArea" instance=ExtResource("6")]
 unique_name_in_owner = true
@@ -552,6 +660,111 @@ custom_minimum_size = Vector2(144, 46)
 layout_mode = 2
 mouse_default_cursor_shape = 2
 text = "Show hint"
+theme_override_styles/normal = SubResource("Violet")
+theme_override_styles/hover = SubResource("Violet")
+theme_override_styles/pressed = SubResource("VioletPressed")
+
+[node name="ConfirmDialog" type="Control" parent="."]
+unique_name_in_owner = true
+visible = false
+z_index = 13
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 0
+
+[node name="Scrim" type="ColorRect" parent="ConfirmDialog"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.16, 0.08, 0.30, 0.58)
+
+[node name="Center" type="CenterContainer" parent="ConfirmDialog"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="Card" type="PanelContainer" parent="ConfirmDialog/Center"]
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("ModalCard")
+
+[node name="Contents" type="VBoxContainer" parent="ConfirmDialog/Center/Card"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Badge" type="PanelContainer" parent="ConfirmDialog/Center/Card/Contents"]
+custom_minimum_size = Vector2(52, 48)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_styles/panel = SubResource("Violet")
+
+[node name="ConfirmSymbol" type="Label" parent="ConfirmDialog/Center/Card/Contents/Badge"]
+unique_name_in_owner = true
+layout_mode = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 27
+
+[node name="ConfirmHeading" type="Label" parent="ConfirmDialog/Center/Card/Contents"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(0.27, 0.11, 0.48, 1)
+horizontal_alignment = 1
+
+[node name="ConfirmDescription" type="Label" parent="ConfirmDialog/Center/Card/Contents"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.35, 0.27, 0.47, 1)
+theme_override_font_sizes/font_size = 16
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="Actions" type="HBoxContainer" parent="ConfirmDialog/Center/Card/Contents"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="ConfirmCancel" type="Button" parent="ConfirmDialog/Center/Card/Contents/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 46)
+layout_mode = 2
+size_flags_horizontal = 3
+focus_neighbor_left = NodePath("../ConfirmAction")
+focus_neighbor_top = NodePath(".")
+focus_neighbor_right = NodePath("../ConfirmAction")
+focus_neighbor_bottom = NodePath(".")
+focus_next = NodePath("../ConfirmAction")
+focus_previous = NodePath("../ConfirmAction")
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(0.30, 0.12, 0.53, 1)
+theme_override_colors/font_hover_color = Color(0.30, 0.12, 0.53, 1)
+theme_override_colors/font_focus_color = Color(0.30, 0.12, 0.53, 1)
+theme_override_colors/font_pressed_color = Color(0.30, 0.12, 0.53, 1)
+theme_override_styles/normal = SubResource("Pearl")
+theme_override_styles/hover = SubResource("Pearl")
+theme_override_styles/pressed = SubResource("PearlPressed")
+text = "Cancel"
+
+[node name="ConfirmAction" type="Button" parent="ConfirmDialog/Center/Card/Contents/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 46)
+layout_mode = 2
+size_flags_horizontal = 3
+focus_neighbor_left = NodePath("../ConfirmCancel")
+focus_neighbor_top = NodePath(".")
+focus_neighbor_right = NodePath("../ConfirmCancel")
+focus_neighbor_bottom = NodePath(".")
+focus_next = NodePath("../ConfirmCancel")
+focus_previous = NodePath("../ConfirmCancel")
+mouse_default_cursor_shape = 2
 theme_override_styles/normal = SubResource("Violet")
 theme_override_styles/hover = SubResource("Violet")
 theme_override_styles/pressed = SubResource("VioletPressed")

@@ -152,7 +152,16 @@ func _test_rules() -> void:
 	_check(rules.undo_move() and rules.snapshot() == [[2, 0], [0, 0, 0, 0], [1], [1, 1, 1, 1], []],
 		"Undo restores the prior board")
 	_check(rules.undo_move() and rules.snapshot() == original, "Consecutive undos restore distinct states")
-	_check(not rules.undo_move() and rules.move_count() == 0, "Undo is safe with empty history")
+	_check(not rules.undo_move() and rules.move_count() == 2, "Undo is safe with empty history")
+	var cumulative := Rules.new()
+	cumulative.start_level([[0], []])
+	for index in range(50):
+		cumulative.pour_liquid(index % 2, 1 - index % 2)
+	for index in range(10):
+		cumulative.undo_move()
+	for index in range(8):
+		cumulative.pour_liquid(index % 2, 1 - index % 2)
+	_check(cumulative.move_count() == 58, "Fifty pours, ten undos, and eight pours count as 58 moves")
 	var snapshot := rules.snapshot()
 	snapshot[0].clear()
 	var layers := rules.layers_at(0)
@@ -162,7 +171,7 @@ func _test_rules() -> void:
 	var expected := original.duplicate(true)
 	original[0].clear()
 	rules.restart_level()
-	_check(rules.snapshot() == expected and not rules.undo_move(), "Restart restores a deep copy and clears undo")
+	_check(rules.snapshot() == expected and not rules.undo_move() and rules.move_count() == 0, "Restart restores a deep copy and clears undo")
 	rules.start_level([[], []])
 	_check(not rules.is_level_complete(), "An empty board is not a win")
 	rules.start_level([[0], [0, 0, 0], []])
@@ -444,7 +453,7 @@ func _test_daily(path: String) -> void:
 	_check(progress.record_win(1, 3, 3, sample.date) == 0, "Daily goals cannot pay again after replay or reload")
 	for goal in progress.daily_goals("2027-01-01"):
 		_check(not goal.complete, "Each calendar date starts with fresh daily goals")
-	_check(not progress.buy_extra_glass() and progress.coins == 400, "An unaffordable glass leaves the wallet intact")
+	_check(not progress.redeem_extra_glass() and progress.coins == 400, "An unaffordable glass leaves the wallet intact")
 
 
 func _test_gameplay_scene(path: String) -> void:
@@ -588,7 +597,7 @@ func _test_gameplay_scene(path: String) -> void:
 	_check(first.get("_layers") == [0, 0, 0] and third.get("_layers") == [1],
 		"Final rendered tube layers match the committed move")
 	_click(undo)
-	_check(moves.text == "0", "Undo button restores the move counter")
+	_check(moves.text == "1" and undo.disabled, "Undo restores the board without reducing the move counter")
 
 	_click(first)
 	_click(third)
@@ -597,13 +606,20 @@ func _test_gameplay_scene(path: String) -> void:
 		await process_frame
 	_check(pour_sound.playing, "The pouring cue is active before interruption")
 	board.notification(Node.NOTIFICATION_APPLICATION_PAUSED)
-	_check(moves.text == "1" and not animation.is_active() and not stream.visible
+	_check(moves.text == "2" and not animation.is_active() and not stream.visible
 		and not first.disabled, "Backgrounding settles the committed move exactly once")
 	_check(not pour_sound.playing, "Backgrounding stops the interrupted pouring cue")
 	board.notification(Node.NOTIFICATION_APPLICATION_RESUMED)
 	_check(first.get("pose_offset") == Vector2.ZERO and first.get("pose_angle") == 0.0,
 		"Interrupted animation resets the source pose")
 	_click(restart)
+	var restart_dialog := board.get_node("%ConfirmDialog") as Control
+	_check(restart_dialog.visible and moves.text == "2", "Restart asks before resetting the board")
+	(board.get_node("%ConfirmCancel") as Button).pressed.emit()
+	await process_frame
+	_check(not restart_dialog.visible and moves.text == "2", "Cancel preserves the attempt")
+	_click(restart)
+	(board.get_node("%ConfirmAction") as Button).pressed.emit()
 	_check(moves.text == "0", "Restart button resets the board")
 	for move in FIRST_SOLUTION:
 		_click(first_row.get_child(move.x) as Button)
@@ -732,25 +748,64 @@ func _test_daily_scene(board: Control) -> void:
 	board.notification(Node.NOTIFICATION_WM_GO_BACK_REQUEST)
 	_check(menu.visible and (menu.get("_home") as Control).visible,
 		"Android Back from Settings returns to Home")
+	var exit_dialog := board.get_node("%ConfirmDialog") as Control
+	board.notification(Node.NOTIFICATION_WM_GO_BACK_REQUEST)
+	_check(exit_dialog.visible, "Android Back from Home asks before exiting")
+	(board.get_node("%ConfirmCancel") as Button).pressed.emit()
+	await process_frame
+	_check(not exit_dialog.visible and menu.visible, "Cancel stays on Home")
+	board.notification(Node.NOTIFICATION_WM_GO_BACK_REQUEST)
+	board.notification(Node.NOTIFICATION_WM_GO_BACK_REQUEST)
+	_check(not exit_dialog.visible and menu.visible, "Android Back dismisses the exit confirmation")
 	board.call("_choose_level", 2)
 	_check(moves.text == "1", "Android Back preserves the campaign attempt")
-	progress.coins = 500
-	menu.call("open", "shop", progress)
-	(menu.get("_glass_buy") as Button).pressed.emit()
-	_check(progress.coins == 0 and Progress.new(50, board.progress_path).extra_glasses == 1,
-		"The Shop saves a single 500-coin purchase")
-	board.call("_choose_level", 2)
+	progress.coins = 7500
 	var rules: RefCounted = board.get("_rules")
 	var count: int = rules.snapshot().size()
-	(board.get_node("%ExtraGlass") as Button).pressed.emit()
-	_check(rules.snapshot().size() == count + 1 and moves.text == "1" and progress.extra_glasses == 0,
-		"Using a purchased glass consumes it and preserves the active attempt")
+	var add_tube := board.get_node("%ExtraGlass") as Button
+	var confirm := board.get_node("%ConfirmAction") as Button
+	var cancel := board.get_node("%ConfirmCancel") as Button
+	add_tube.pressed.emit()
+	_check(exit_dialog.visible and progress.coins == 7500 and rules.snapshot().size() == count,
+		"Add Tube opens a confirmation without spending or adding a tube")
+	_check("500 coins" in (board.get_node("%ConfirmDescription") as Label).text,
+		"The first confirmation explains the 500-coin charge")
+	cancel.pressed.emit()
+	_check(progress.coins == 7500 and rules.snapshot().size() == count, "Cancel leaves wallet and board intact")
+	for price in [500, 1000, 2000, 4000]:
+		var before_count: int = rules.snapshot().size()
+		var before_coins: int = progress.coins
+		add_tube.pressed.emit()
+		_check(("%d coins" % price) in (board.get_node("%ConfirmDescription") as Label).text,
+			"The next tube price doubles")
+		confirm.pressed.emit()
+		_check(rules.snapshot().size() == before_count + 1 and progress.coins == before_coins - price
+			and moves.text == "1", "Confirmed purchase adds one tube and deducts its exact cost")
+		confirm.pressed.emit()
+		_check(rules.snapshot().size() == before_count + 1, "Repeated OK cannot duplicate a purchase")
+	_check(Progress.new(50, board.progress_path).coins == 0, "Tube charges survive a save reload")
+	add_tube.pressed.emit()
+	_check(confirm.disabled and rules.snapshot().size() == count + 4,
+		"An unaffordable tube opens the dialog with OK disabled")
+	cancel.pressed.emit()
 	board.call("_undo_move")
-	_check(rules.snapshot().size() == count + 1 and moves.text == "0", "Undo retains the added glass")
+	_check(rules.snapshot().size() == count + 4 and moves.text == "1"
+		and rules.extra_glass_price() == 8000, "Undo retains every added glass, total moves, and next price")
 	board.call("_restart_level")
-	_check(rules.snapshot().size() == count and Progress.new(50, board.progress_path).extra_glasses == 0,
-		"Restart removes the used glass without restoring it to the inventory")
-
+	_check(rules.snapshot().size() == count and rules.extra_glass_price() == 500,
+		"Restart removes added tubes and resets the price to 500")
+	(board.get_node("%Restart") as Button).disabled = false
+	(board.get_node("%Restart") as Button).pressed.emit()
+	_check(not confirm.disabled, "Restart confirmation is enabled after an unaffordable tube offer")
+	cancel.pressed.emit()
+	progress.extra_glasses = 1
+	add_tube.pressed.emit()
+	_check(not confirm.disabled and "No coins" in (board.get_node("%ConfirmDescription") as Label).text,
+		"Previously owned tubes also require confirmation and explain their free use")
+	confirm.pressed.emit()
+	_check(rules.extra_glass_count() == 1 and progress.extra_glasses == 0 and progress.coins == 0,
+		"Confirming an owned tube consumes the inventory without charging")
+	board.call("_restart_level")
 
 func _wait_for_pour(animation: Node) -> void:
 	var deadline := Time.get_ticks_msec() + 2000

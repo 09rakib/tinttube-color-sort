@@ -67,8 +67,6 @@ var _back: Button
 var _toggles := {}
 var _item_buttons := {}
 var _shop_message: Label
-var _glass_stock: Label
-var _glass_buy: Button
 var _ads: RewardedAds
 var _ad_button: Button
 var _ad_message: Label
@@ -84,7 +82,8 @@ func _ready() -> void:
 	_profile = _button(header, "", func() -> void: open("achievements", _progress))
 	_profile.icon = _art(Rect2(55, 32, 90, 90))
 	_profile.expand_icon = true
-	_profile.custom_minimum_size = Vector2(53, 49)
+	_profile.custom_minimum_size = Vector2(46, 44)
+	_profile.add_theme_constant_override("icon_max_width", 24)
 	_profile.accessibility_name = "Player medals"
 	_style_button(_profile, true, 24)
 	_title = _label(header, "", 18, true)
@@ -94,10 +93,11 @@ func _ready() -> void:
 	_wallet = _button(header, "", func() -> void: open("shop", _progress))
 	_wallet.icon = COIN_ART
 	_wallet.expand_icon = true
-	_wallet.add_theme_constant_override("icon_max_width", 24)
-	_wallet.add_theme_font_size_override("font_size", 15)
+	_wallet.custom_minimum_size.y = 44
+	_wallet.add_theme_constant_override("icon_max_width", 20)
+	_wallet.add_theme_font_size_override("font_size", 14)
 	_wallet.accessibility_name = "Coin balance and shop"
-	_style_button(_wallet, true, 23)
+	_glossy_button(_wallet, true)
 	_warning = _label(self, "", 14)
 	_warning.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_warning.hide()
@@ -141,7 +141,7 @@ func go_back() -> bool:
 
 
 func _build_home() -> void:
-	_home = _column(self, 13)
+	_home = _column(self, 14)
 	_home.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var hero := _masked_art(Rect2(0, 24, 1024, 699), Vector2(0, 218), true)
 	hero.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -149,11 +149,11 @@ func _build_home() -> void:
 	_home.add_child(hero)
 
 	_play = _button(_home, "▶   Play Now", func() -> void: play_requested.emit(_progress.unlocked_level()))
-	_play.custom_minimum_size.y = 68
-	_play.add_theme_font_size_override("font_size", 29)
+	_play.custom_minimum_size.y = 59
+	_play.add_theme_font_size_override("font_size", 25)
 	_glossy_button(_play, true)
 	_continue = _button(_home, "", func() -> void: play_requested.emit(_progress.current_level))
-	_continue.custom_minimum_size.y = 77
+	_continue.custom_minimum_size.y = 66
 	_glossy_button(_continue, false)
 	var resume := HBoxContainer.new()
 	resume.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -162,18 +162,18 @@ func _build_home() -> void:
 	resume.offset_right = -15
 	resume.add_theme_constant_override("separation", 7)
 	_continue.add_child(resume)
-	resume.add_child(_masked_art(Rect2(107, 885, 132, 115), Vector2(52, 0)))
+	resume.add_child(_masked_art(Rect2(107, 885, 132, 115), Vector2(45, 0)))
 	var progress := _column(resume, 4)
 	progress.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	progress.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	progress.alignment = BoxContainer.ALIGNMENT_CENTER
-	_continue_title = _label(progress, "", 19, true)
+	_continue_title = _label(progress, "", 17, true)
 	_continue_title.add_theme_color_override("font_color", Color("#34146a"))
 	var progress_row := HBoxContainer.new()
 	progress_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	progress.add_child(progress_row)
 	_continue_progress = ProgressBar.new()
-	_continue_progress.custom_minimum_size.y = 14
+	_continue_progress.custom_minimum_size.y = 11
 	_continue_progress.show_percentage = false
 	_continue_progress.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_continue_progress.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -181,9 +181,9 @@ func _build_home() -> void:
 	_continue_progress.add_theme_stylebox_override("background", _surface(Color("#ddd0f6"), Color("#efe4ff"), 8, false))
 	_continue_progress.add_theme_stylebox_override("fill", _surface(Color("#8541e4"), Color("#bb86ff"), 8, false))
 	progress_row.add_child(_continue_progress)
-	_continue_count = _label(progress_row, "", 13, true)
+	_continue_count = _label(progress_row, "", 12, true)
 	_continue_count.add_theme_color_override("font_color", Color("#552499"))
-	var arrow := _label(resume, "›", 34, true)
+	var arrow := _label(resume, "›", 27, true)
 	arrow.add_theme_color_override("font_color", Color("#7033c7"))
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 11)
@@ -200,7 +200,7 @@ func _build_home() -> void:
 
 func _home_tile(parent: Node, title: String, region: Rect2, action: Callable) -> void:
 	var button := _button(parent, "", action)
-	button.custom_minimum_size.y = 92
+	button.custom_minimum_size.y = 79
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.accessibility_name = title
 	_glossy_button(button, false)
@@ -210,10 +210,10 @@ func _home_tile(parent: Node, title: String, region: Rect2, action: Callable) ->
 	contents.alignment = BoxContainer.ALIGNMENT_CENTER
 	contents.add_theme_constant_override("separation", 1)
 	button.add_child(contents)
-	var icon := _masked_art(region.grow(4.0), Vector2(68, 57))
+	var icon := _masked_art(region.grow(4.0), Vector2(57, 47))
 	icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	contents.add_child(icon)
-	var label := _label(contents, title, 17, true)
+	var label := _label(contents, title, 15, true)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.add_theme_color_override("font_color", Color("#331461"))
 
@@ -247,10 +247,11 @@ func _glossy_button(button: Button, purple: bool) -> void:
 		style.texture = VIOLET_GLASS if purple else PEARL_GLASS
 		for side in [SIDE_LEFT, SIDE_TOP, SIDE_RIGHT, SIDE_BOTTOM]:
 			style.set_texture_margin(side, 26.0 if side == SIDE_BOTTOM else 21.0)
-			style.set_expand_margin(side, 10.0 if side == SIDE_BOTTOM else 5.0)
-			style.set_content_margin(side, 12.0)
+			style.set_expand_margin(side, 7.0 if side == SIDE_BOTTOM else 3.0)
+			style.set_content_margin(side, 10.0)
+		style.modulate_color = Color("#f8f3fff2")
 		if state == &"hover":
-			style.modulate_color = Color("#fff4ff")
+			style.modulate_color = Color("#ffffff")
 		elif state == &"pressed":
 			style.modulate_color = Color("#dfc7ff")
 		button.add_theme_stylebox_override(state, style)
@@ -416,13 +417,6 @@ func _build_shop() -> void:
 	_ad_message = _label(items, "", 14)
 	_ad_message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_ad_message.hide()
-	var glass := _card(items)
-	_label(glass, "Extra Glass", 21, true)
-	var description := _label(glass, "Adds one empty glass to your current attempt. Each glass can be used once.", 16)
-	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_glass_stock = _label(glass, "", 16)
-	_glass_buy = _button(glass, "Buy · %d coins" % Rewards.EXTRA_GLASS_PRICE, _buy_glass)
-	_style_button(_glass_buy, true, 19)
 	for kind in ["Theme", "Rim"]:
 		_label(items, "Themes" if kind == "Theme" else "Glass rims", 19, true)
 		for item in Rewards.ITEMS:
@@ -479,16 +473,6 @@ func _buy_or_equip(id: String) -> void:
 	_refresh()
 
 
-func _buy_glass() -> void:
-	if _progress.buy_extra_glass():
-		_shop_message.text = "Extra glass added. Use it during a puzzle."
-	elif _progress.coins < Rewards.EXTRA_GLASS_PRICE:
-		_shop_message.text = "You need %d coins to buy an extra glass." % Rewards.EXTRA_GLASS_PRICE
-	else:
-		_shop_message.text = "The purchase could not be saved."
-	_refresh()
-
-
 func _refresh() -> void:
 	_wallet.text = "%d Coins   +" % _progress.coins
 	_warning.text = _progress.save_warning
@@ -499,7 +483,6 @@ func _refresh() -> void:
 	_continue_progress.max_value = _progress.level_count()
 	_continue_progress.value = _progress.completed_count()
 	_continue_progress.accessibility_name = "%d of %d levels completed" % [_progress.completed_count(), _progress.level_count()]
-	_glass_stock.text = "%d owned" % _progress.extra_glasses
 	_update_achievements()
 	for key in _toggles:
 		_toggles[key].set_pressed_no_signal(_progress.settings[key])

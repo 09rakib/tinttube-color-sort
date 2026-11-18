@@ -7,6 +7,7 @@ var _capacity := DEFAULT_CAPACITY
 var _initial: Array = []
 var _tubes: Array = []
 var _history: Array[Array] = []
+var _moves_made := 0
 
 
 func start_level(tubes: Array, capacity: int = DEFAULT_CAPACITY, mystery: bool = false) -> bool:
@@ -50,28 +51,41 @@ func pour_liquid(source: int, destination: int) -> int:
 		return 0
 	_history.append(snapshot())
 	transfer_layers(_tubes, source, destination, amount)
+	_moves_made += 1
 	return amount
 
 
 func undo_move() -> bool:
-	if _history.is_empty():
+	if not can_undo():
 		return false
 	_tubes = _history.pop_back()
 	return true
 
 
+func can_undo() -> bool:
+	return not _history.is_empty()
+
+
 func restart_level() -> void:
 	_tubes = _initial.duplicate(true)
 	_history.clear()
+	_moves_made = 0
 
 
 func has_extra_glass() -> bool:
-	return _tubes.size() > _initial.size()
+	return extra_glass_count() > 0
+
+
+func extra_glass_count() -> int:
+	return _tubes.size() - _initial.size()
+
+
+func extra_glass_price() -> int:
+	# Saved wallets support up to 2^31 - 1 coins. Stop doubling once unaffordable.
+	return 500 * (1 << mini(extra_glass_count(), 23))
 
 
 func add_extra_glass() -> void:
-	if has_extra_glass():
-		return
 	_tubes.append([])
 	for previous in _history:
 		previous.append([])
@@ -117,7 +131,7 @@ func layers_at(index: int) -> Array:
 
 
 func move_count() -> int:
-	return _history.size()
+	return _moves_made
 
 
 static func legal_pour_amount(tubes: Array, capacity: int, source: int, destination: int) -> int:

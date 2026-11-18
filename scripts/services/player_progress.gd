@@ -212,17 +212,11 @@ func buy_hint() -> bool:
 	return _spend_and_save(Rewards.HINT_PRICE)
 
 
-func buy_extra_glass() -> bool:
-	extra_glasses += 1
-	if _spend_and_save(Rewards.EXTRA_GLASS_PRICE):
-		return true
-	extra_glasses -= 1
-	return false
-
-
-func use_extra_glass() -> bool:
-	if extra_glasses <= 0:
+func redeem_extra_glass(price: int = Rewards.EXTRA_GLASS_PRICE) -> bool:
+	if price < Rewards.EXTRA_GLASS_PRICE:
 		return false
+	if extra_glasses <= 0:
+		return _spend_and_save(price)
 	extra_glasses -= 1
 	if _change_coins_and_save(0):
 		return true

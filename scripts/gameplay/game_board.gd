@@ -28,6 +28,9 @@ const SELECT_SOURCE := "Tap a tube to select its top color."
 @onready var _status: Label = %Status
 @onready var _undo: Button = %Undo
 @onready var _restart: Button = %Restart
+@onready var _confirm_dialog: Control = %ConfirmDialog
+@onready var _confirm_button: Button = %ConfirmAction
+@onready var _confirm_cancel: Button = %ConfirmCancel
 @onready var _extra_glass: Button = %ExtraGlass
 @onready var _victory: Control = %VictoryOverlay
 @onready var _victory_title: Label = %VictoryTitle
@@ -37,6 +40,7 @@ const SELECT_SOURCE := "Tap a tube to select its top color."
 @onready var _menu: GameMenu = %GameMenu
 @onready var _home: Button = %Home
 @onready var _wallet: Label = %Wallet
+@onready var _wallet_shop: Button = %WalletShop
 @onready var _hint: Button = %Hint
 @onready var _hint_dialog: Control = %HintDialog
 @onready var _hint_confirm: Button = %HintConfirm
@@ -65,6 +69,8 @@ var _daily_level := {}
 var _prepared_daily := {}
 var _daily_generation_date := ""
 var _campaign_rules: Rules
+var _confirmation_action: Callable
+var _confirmation_focus: Control
 
 
 func _ready() -> void:
@@ -103,8 +109,26 @@ func _ready() -> void:
 	_level_select.level_selected.connect(_choose_level)
 	_level_select.back_requested.connect(_back_from_levels)
 	_undo.pressed.connect(_undo_move)
-	_restart.pressed.connect(_restart_level)
-	_extra_glass.pressed.connect(_use_extra_glass)
+	_wallet_shop.pressed.connect(func() -> void:
+		if _busy() or not _content.visible or _rules.is_level_complete():
+			return
+		_content.hide()
+		_menu.open("shop", _progress)
+	)
+	_restart.pressed.connect(func() -> void:
+		if _restart.disabled or _busy() or not _content.visible:
+			return
+		_open_confirmation("↻", "Restart puzzle?", "Your current board and moves will reset.", "Yes", _restart_level)
+	)
+	_confirm_cancel.pressed.connect(_close_confirmation)
+	_confirm_button.pressed.connect(func() -> void:
+		if not _confirm_dialog.visible or _confirm_button.disabled:
+			return
+		var action := _confirmation_action
+		_close_confirmation()
+		action.call()
+	)
+	_extra_glass.pressed.connect(_offer_extra_glass)
 	_next_level.pressed.connect(_advance_level)
 	_content.visibility_changed.connect(_sync_victory_visibility)
 	_hint.text = "Hint · %d" % Rewards.HINT_PRICE
@@ -132,7 +156,9 @@ func _notification(what: int) -> void:
 	elif what == NOTIFICATION_APPLICATION_RESUMED:
 		_audio.set_backgrounded(false)
 	elif what == NOTIFICATION_WM_GO_BACK_REQUEST and _progress != null:
-		if _hint_dialog.visible:
+		if _confirm_dialog.visible:
+			_close_confirmation()
+		elif _hint_dialog.visible:
 			_close_hint_dialog()
 		elif _hint_search != null:
 			_cancel_hint_search()
@@ -140,10 +166,36 @@ func _notification(what: int) -> void:
 			_back_from_levels()
 		elif _menu.visible:
 			if not _menu.go_back():
-				get_tree().quit()
+				_ask_to_exit()
 		else:
 			_pour.settle()
 			_open_home()
+
+
+func _ask_to_exit() -> void:
+	_open_confirmation("↗", "Exit TintTube?", "Are you sure you want to exit the game?", "OK", get_tree().quit)
+
+
+func _open_confirmation(symbol: String, heading: String, description: String, button_text: String, action: Callable) -> void:
+	_confirmation_action = action
+	_confirmation_focus = get_viewport().gui_get_focus_owner()
+	%ConfirmSymbol.text = symbol
+	%ConfirmHeading.text = heading
+	%ConfirmDescription.text = description
+	_confirm_button.text = button_text
+	_confirm_button.disabled = false
+	_confirm_dialog.show()
+	_update_controls()
+	_confirm_cancel.grab_focus()
+
+
+func _close_confirmation() -> void:
+	_confirm_dialog.hide()
+	_confirmation_action = Callable()
+	_update_controls()
+	if is_instance_valid(_confirmation_focus) and _confirmation_focus.is_visible_in_tree():
+		_confirmation_focus.grab_focus()
+	_confirmation_focus = null
 
 
 func _open_levels() -> void:
@@ -386,15 +438,39 @@ func _restart_level() -> void:
 	_refresh()
 
 
-func _use_extra_glass() -> void:
-	if _busy() or not _content.visible or _rules.is_level_complete() or _rules.has_extra_glass():
+func _offer_extra_glass() -> void:
+	if _busy() or not _content.visible or _rules.is_level_complete():
 		return
-	if not _progress.use_extra_glass():
+	var price := _rules.extra_glass_price()
+	var description := "Add one empty tube?\n%d coins will be deducted." % price
+	var can_afford := _progress.coins >= price
+	if _progress.extra_glasses > 0:
+		description = "Use one of your previously purchased tubes?\nNo coins will be deducted."
+		can_afford = true
+	elif not can_afford:
+		description += "\nYou have %d coins." % _progress.coins
+	_open_confirmation("+", "Add a tube?", description, "OK", _use_extra_glass.bind(price))
+	_confirm_button.disabled = not can_afford
+
+
+func _use_extra_glass(price: int) -> void:
+	if _busy() or not _content.visible or _rules.is_level_complete() or price != _rules.extra_glass_price():
+		return
+	if not _progress.redeem_extra_glass(price):
 		_refresh()
+		_status.text = "You need %d coins to add a tube." % price \
+			if _progress.coins < Rewards.EXTRA_GLASS_PRICE and _progress.extra_glasses == 0 \
+			else "The tube purchase could not be saved."
 		return
 	_rules.add_extra_glass()
 	_build_board(_active_level())
+	_scroll_to_added_tube.call_deferred()
 	_status.text = "Extra glass added for this attempt."
+
+
+func _scroll_to_added_tube() -> void:
+	if _content.visible and not _tube_views.is_empty():
+		_rows.get_parent().get_parent().ensure_control_visible(_tube_views.back())
 
 
 func _advance_level() -> void:
@@ -468,11 +544,13 @@ func _update_controls() -> void:
 		tube.disabled = tubes_disabled
 	_level_picker.disabled = tubes_disabled
 	_home.disabled = tubes_disabled
+	_wallet_shop.disabled = tubes_disabled
 	_hint.disabled = tubes_disabled or _hint_move.x >= 0
-	_extra_glass.visible = _progress.extra_glasses > 0 or _rules.has_extra_glass()
-	_extra_glass.disabled = tubes_disabled or _rules.has_extra_glass()
-	_extra_glass.text = "Extra glass added" if _rules.has_extra_glass() else "Use extra glass · %d owned" % _progress.extra_glasses
-	_undo.disabled = tubes_disabled or count == 0
+	_extra_glass.disabled = tubes_disabled
+	var needs_coins := _progress.extra_glasses == 0
+	_extra_glass.icon = preload("res://assets/theme/gameplay_coins.png") if needs_coins else null
+	_extra_glass.text = "Add Tube · %d" % _rules.extra_glass_price() if needs_coins else "Use owned tube"
+	_undo.disabled = tubes_disabled or not _rules.can_undo()
 	_restart.disabled = tubes_disabled or (count == 0 and _selected < 0 and not _rules.has_extra_glass())
 
 
@@ -493,12 +571,15 @@ func _reveal_victory() -> void:
 
 
 func _show_wallet(amount: float) -> void:
-	_wallet.text = str(roundi(amount))
+	var digits := str(roundi(amount))
+	for offset in range(digits.length() - 3, 0, -3):
+		digits = digits.insert(offset, ",")
+	_wallet.text = digits
 	_wallet.accessibility_name = "Coins: " + _wallet.text
 
 
 func _busy() -> bool:
-	return _pour.is_active() or _hint_search != null or _hint_dialog.visible
+	return _pour.is_active() or _hint_search != null or _hint_dialog.visible or _confirm_dialog.visible
 
 
 func _apply_settings() -> void:
@@ -539,10 +620,15 @@ func _close_hint_dialog() -> void:
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
-		if _hint_dialog.visible:
+		if _confirm_dialog.visible:
+			_close_confirmation()
+		elif _hint_dialog.visible:
 			_close_hint_dialog()
 		elif _hint_search != null:
 			_cancel_hint_search()
+		elif _menu.visible:
+			if not _menu.go_back():
+				_ask_to_exit()
 		else:
 			return
 		get_viewport().set_input_as_handled()
