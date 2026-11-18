@@ -316,7 +316,9 @@ func _build_board(level: Dictionary) -> void:
 	var heading := "Level %d" % level.id if _daily_level.is_empty() else "Daily"
 	_level_picker.text = heading
 	var difficulty := "Mystery" if level.get("mystery", false) else String(level.difficulty).capitalize()
-	if level.get("super_hard", false):
+	if level.capacity > Rules.DEFAULT_CAPACITY:
+		difficulty = "%d-Layer Challenge" % level.capacity
+	elif level.get("super_hard", false):
 		difficulty = "Super Hard"
 	elif level.get("extra_hard", false):
 		difficulty = "Extra Super Hard Mystery" if level.mystery else "Extra Super Hard"
@@ -490,7 +492,11 @@ func _clear_selection() -> void:
 	if _rules.move_count() != 0:
 		return
 	var level := _active_level()
-	if level.get("extra_hard", false):
+	if level.capacity > Rules.DEFAULT_CAPACITY:
+		_status.text = "Match %d layers per glass." % level.capacity
+		if level.mystery:
+			_status.text = "Match %d layers. Pour to reveal a ? layer." % level.capacity
+	elif level.get("extra_hard", false):
 		_status.text = "Match six layers. Pour to reveal a ? layer." if level.mystery \
 			else "Extra Super Hard · Match six layers per glass."
 	elif level.get("mystery", false):

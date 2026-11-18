@@ -8,6 +8,19 @@ const SUPER_HARD_CAPACITY := 5
 const EXTRA_HARD_CAPACITY := 6
 
 
+static func campaign_capacity(id: int) -> int:
+	if id >= 101:
+		# The late campaign grows the physical puzzle depth in clear, learnable bands.
+		return 5 + mini(4, (id - 101) / 180)
+	var legacy_hard_level := id <= 100
+	var super_hard := legacy_hard_level and id % 10 == 7
+	var extra_mystery := legacy_hard_level and id % 20 == 14
+	var extra_hard := extra_mystery or (legacy_hard_level and id >= 13 and id % 10 == 3)
+	if extra_hard:
+		return EXTRA_HARD_CAPACITY
+	return SUPER_HARD_CAPACITY if super_hard else Rules.DEFAULT_CAPACITY
+
+
 static func load_core_levels() -> Array[Dictionary]:
 	var levels: Array[Dictionary] = []
 	var file := FileAccess.open(CORE_LEVELS, FileAccess.READ)
@@ -35,12 +48,11 @@ static func _parse_level(raw: Variant) -> Dictionary:
 	var par_moves := _unsigned_integer(raw.get("par_moves"))
 	var difficulty: Variant = raw.get("difficulty")
 	var raw_tubes: Variant = raw.get("tubes")
-	var super_hard := id % 10 == 7
-	var extra_mystery := id % 20 == 14
-	var extra_hard := extra_mystery or (id >= 13 and id % 10 == 3)
-	var expected_capacity := SUPER_HARD_CAPACITY if super_hard else Rules.DEFAULT_CAPACITY
-	if extra_hard:
-		expected_capacity = EXTRA_HARD_CAPACITY
+	var legacy_hard_level := id <= 100
+	var super_hard := legacy_hard_level and id % 10 == 7
+	var extra_mystery := legacy_hard_level and id % 20 == 14
+	var extra_hard := extra_mystery or (legacy_hard_level and id >= 13 and id % 10 == 3)
+	var expected_capacity := campaign_capacity(id)
 	if id <= 0 or capacity != expected_capacity or par_moves <= 0:
 		return {}
 	if not difficulty is String or difficulty.is_empty():
@@ -70,7 +82,7 @@ static func _parse_level(raw: Variant) -> Dictionary:
 	if Rules.is_solved(tubes, capacity):
 		return {}
 	return {"id": id, "difficulty": difficulty, "capacity": capacity, "tubes": tubes,
-		"par_moves": par_moves, "mystery": id % 5 == 0 or extra_mystery,
+		"par_moves": par_moves, "mystery": legacy_hard_level and (id % 5 == 0 or extra_mystery),
 		"super_hard": super_hard, "extra_hard": extra_hard}
 
 
